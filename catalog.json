@@ -1,0 +1,564 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07",
+  "tabs": [
+    {
+      "id": "apps",
+      "name": "Apps",
+      "categories": [
+        {
+          "name": "Browsers",
+          "hint": "web & private browsers",
+          "apps": [
+            {
+              "id": "chrome",
+              "name": "Google Chrome",
+              "description": "Fast, secure browser by Google",
+              "publisher": "Google LLC",
+              "url": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
+              "homepage": "https://www.google.com/chrome/"
+            },
+            {
+              "id": "brave",
+              "name": "Brave",
+              "description": "Privacy-first browser that blocks ads & trackers",
+              "publisher": "Brave Software, Inc.",
+              "url": "https://laptop-updates.brave.com/latest/BraveBrowserSetup.exe",
+              "installerType": "Exe",
+              "silentArgs": "--silent",
+              "needsReview": true,
+              "homepage": "https://brave.com/"
+            },
+            {
+              "id": "waterfox",
+              "name": "Waterfox",
+              "description": "Independent build of Firefox focused on privacy & speed",
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "needsReview": true,
+              "homepage": "https://waterfox.net/"
+            },
+            {
+              "id": "vivaldi",
+              "name": "Vivaldi",
+              "description": "Highly customizable Chromium browser for power users",
+              "publisher": "Vivaldi Technologies AS",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
+              "needsReview": true,
+              "homepage": "https://vivaldi.com/"
+            },
+            {
+              "id": "helium",
+              "name": "Helium",
+              "description": "Open-source privacy-focused Chromium fork",
+              "installerType": "Exe",
+              "silentArgs": "/S",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://github.com/imputnet/helium"
+            }
+          ]
+        },
+        {
+          "name": "Communication",
+          "hint": "chat & meetings",
+          "apps": [
+            {
+              "id": "discord",
+              "name": "Discord",
+              "description": "Voice, video & text chat for communities and gamers",
+              "publisher": "Discord Inc.",
+              "url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64",
+              "installerType": "Exe",
+              "silentArgs": "--silent",
+              "needsReview": true,
+              "homepage": "https://discord.com/"
+            },
+            {
+              "id": "slack",
+              "name": "Slack",
+              "description": "Channel-based messaging for teams",
+              "publisher": "Slack Technologies LLC",
+              "installerType": "Exe",
+              "silentArgs": "--silent",
+              "needsReview": true,
+              "homepage": "https://slack.com/"
+            },
+            {
+              "id": "zoom",
+              "name": "Zoom",
+              "description": "Video meetings and webinars",
+              "publisher": "Zoom Video Communications, Inc.",
+              "url": "https://zoom.us/client/latest/ZoomInstallerFull.msi",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
+              "needsReview": true,
+              "homepage": "https://zoom.us/"
+            },
+            {
+              "id": "telegram",
+              "name": "Telegram Desktop",
+              "description": "Fast and secure messaging",
+              "publisher": "Telegram FZ-LLC",
+              "url": "https://telegram.org/dl/desktop/win64",
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "homepage": "https://telegram.org/"
+            },
+            {
+              "id": "teams",
+              "name": "Microsoft Teams",
+              "description": "Workplace chat & meetings (classic MSI)",
+              "publisher": "Microsoft Corporation",
+              "url": "https://aka.ms/teamsmsi",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart ALLUSER=1",
+              "needsReview": true,
+              "homepage": "https://www.microsoft.com/microsoft-teams/"
+            }
+          ]
+        },
+        {
+          "name": "Media",
+          "hint": "video, audio & creation",
+          "apps": [
+            {
+              "id": "obs-studio",
+              "name": "OBS Studio",
+              "description": "Streaming and recording studio",
+              "github": { "repo": "obsproject/obs-studio", "asset": "OBS-Studio-.*-Windows-x64-Installer\\.exe" },
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "homepage": "https://obsproject.com/"
+            },
+            {
+              "id": "mpvnet",
+              "name": "mpv.net",
+              "description": "Modern frontend for the mpv media player",
+              "github": { "repo": "stax76/mpv.net", "asset": "^mpv\\.net-v.*-setup-x64\\.exe$" },
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://github.com/stax76/mpv.net"
+            },
+            {
+              "id": "spotify",
+              "name": "Spotify",
+              "description": "Music streaming",
+              "publisher": "Spotify AB",
+              "url": "https://download.scdn.co/SpotifySetup.exe",
+              "installerType": "Exe",
+              "silentArgs": "--silent",
+              "needsReview": true,
+              "homepage": "https://www.spotify.com/"
+            },
+            {
+              "id": "audacity",
+              "name": "Audacity",
+              "description": "Free, open-source audio editor and recorder",
+              "github": { "repo": "audacity/audacity", "asset": "^audacity-win-.*-64bit\\.exe$" },
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://www.audacityteam.org/"
+            },
+            {
+              "id": "blender",
+              "name": "Blender",
+              "description": "Open-source 3D creation suite (modeling, rendering, VFX)",
+              "publisher": "Stichting Blender Foundation",
+              "url": "https://download.blender.org/release/Blender5.2/blender-5.2.0-windows-x64.msi",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
+              "needsReview": true,
+              "homepage": "https://www.blender.org/"
+            },
+            {
+              "id": "yt-dlp",
+              "name": "yt-dlp",
+              "description": "Command-line video downloader (portable exe)",
+              "github": { "repo": "yt-dlp/yt-dlp", "asset": "^yt-dlp\\.exe$" },
+              "installerType": "Portable",
+              "portableSubdir": "yt-dlp",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://github.com/yt-dlp/yt-dlp"
+            },
+            {
+              "id": "ffmpeg",
+              "name": "FFmpeg",
+              "description": "Audio/video toolkit (portable zip - manual unzip required in v1)",
+              "url": "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+              "installerType": "Portable",
+              "portableSubdir": "ffmpeg",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://ffmpeg.org/"
+            },
+            {
+              "id": "taiga",
+              "name": "Taiga",
+              "description": "Anime discovery & tracking desktop app",
+              "github": { "repo": "erengy/taiga", "asset": "^TaigaSetup_.*\\.exe$" },
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://taiga.moe/"
+            },
+            {
+              "id": "medal",
+              "name": "Medal.tv",
+              "description": "Game clip recording and sharing",
+              "publisher": "Medal B.V.",
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "needsReview": true,
+              "homepage": "https://medal.tv/"
+            }
+          ]
+        },
+        {
+          "name": "Utilities",
+          "hint": "files & system",
+          "apps": [
+            {
+              "id": "7-zip",
+              "name": "7-Zip",
+              "description": "Open-source file archiver",
+              "publisher": "Igor Pavlov",
+              "url": "https://www.7-zip.org/a/7z2501-x64.exe",
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "homepage": "https://www.7-zip.org/"
+            },
+            {
+              "id": "powertoys",
+              "name": "PowerToys",
+              "description": "Power-user utilities for Windows",
+              "publisher": "Microsoft Corporation",
+              "github": { "repo": "microsoft/PowerToys", "asset": "^PowerToysSetup-.*-x64\\.exe$" },
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "homepage": "https://learn.microsoft.com/windows/powertoys/"
+            },
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "description": "Free and open-source BitTorrent client",
+              "github": { "repo": "qbittorrent/qBittorrent", "asset": "^qbittorrent_[0-9.]+_x64_setup\\.exe$" },
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "homepage": "https://www.qbittorrent.org/"
+            },
+            {
+              "id": "wiztree",
+              "name": "WizTree",
+              "description": "Fast disk space analyzer",
+              "publisher": "Antibody Software",
+              "url": "https://diskanalyzer.com/files/wiztree_4_31_setup.exe",
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "homepage": "https://diskanalyzer.com/"
+            },
+            {
+              "id": "winrar",
+              "name": "WinRAR",
+              "description": "Powerful archive manager",
+              "publisher": "win.rar GmbH",
+              "url": "https://www.win-rar.com/fileadmin/winrar-versions/winrar-x64-710.exe",
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "needsReview": true,
+              "homepage": "https://www.win-rar.com/"
+            },
+            {
+              "id": "openrgb",
+              "name": "OpenRGB",
+              "description": "Open-source RGB control",
+              "github": { "repo": "CalcProgrammer1/OpenRGB", "asset": "^OpenRGB_.*_Windows_64_.*\\.msi$" },
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://openrgb.org/"
+            }
+          ]
+        },
+        {
+          "name": "Development",
+          "hint": "tools & runtimes",
+          "apps": [
+            {
+              "id": "vscode",
+              "name": "Visual Studio Code",
+              "description": "Lightweight, extensible code editor",
+              "publisher": "Microsoft Corporation",
+              "url": "https://update.code.visualstudio.com/latest/win32-x64-user/stable",
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /MERGETASKS=!runcode",
+              "homepage": "https://code.visualstudio.com/"
+            },
+            {
+              "id": "cursor",
+              "name": "Cursor",
+              "description": "AI code editor",
+              "installerType": "Exe",
+              "silentArgs": "--silent",
+              "needsReview": true,
+              "homepage": "https://cursor.sh/"
+            },
+            {
+              "id": "antigravity",
+              "name": "Antigravity IDE",
+              "description": "Pending installer URL (new release) - manual review",
+              "installerType": "Exe",
+              "needsReview": true,
+              "unverified": true,
+              "homepage": "https://antigravity.dev/"
+            },
+            {
+              "id": "jetbrains-toolbox",
+              "name": "JetBrains Toolbox",
+              "description": "Toolbox, then use it to install IntelliJ IDEA Community and other IDEs",
+              "publisher": "JetBrains s.r.o.",
+              "url": "https://data.services.jetbrains.com/products/download?platform=windows&code=TBA",
+              "installerType": "Exe",
+              "silentArgs": "/S",
+              "needsReview": true,
+              "homepage": "https://www.jetbrains.com/toolbox/"
+            },
+            {
+              "id": "arduino-ide",
+              "name": "Arduino IDE",
+              "description": "Official Arduino development environment",
+              "github": { "repo": "arduino/arduino-ide", "asset": "^arduino-ide_.*_Windows_64bit\\.exe$" },
+              "installerType": "Inno",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "homepage": "https://www.arduino.cc/en/software"
+            },
+            {
+              "id": "dotnet-sdk",
+              "name": ".NET SDK (latest)",
+              "description": "Builds and runs .NET apps (installs via official dotnet-install, channel 10.0)",
+              "installerType": "Script",
+              "silentArgs": "& {[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://dot.net/v1/dotnet-install.ps1').Content)) -Channel '10.0' -InstallDir $env:LOCALAPPDATA\\Microsoft\\DotNet}",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://dotnet.microsoft.com/"
+            },
+            {
+              "id": "python",
+              "name": "Python",
+              "description": "Python programming language runtime",
+              "publisher": "Python Software Foundation",
+              "url": "https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe",
+              "installerType": "Nsis",
+              "silentArgs": "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0",
+              "homepage": "https://www.python.org/"
+            },
+            {
+              "id": "git",
+              "name": "Git",
+              "description": "Distributed version control system for Windows",
+              "github": { "repo": "git-for-windows/git", "asset": "^Git-.*-64-bit\\.exe$" },
+              "installerType": "Nsis",
+              "silentArgs": "/VERYSILENT /NORESTART /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS",
+              "needsReview": true,
+              "homepage": "https://gitforwindows.org/"
+            },
+            {
+              "id": "dotnet-desktop-runtime",
+              "name": ".NET Desktop Runtime (latest)",
+              "description": "Runtime required by many .NET Windows desktop apps",
+              "publisher": "Microsoft Corporation",
+              "url": "https://aka.ms/dotnet/10.0/windowsdesktop/win-x64",
+              "installerType": "Exe",
+              "silentArgs": "/quiet /norestart",
+              "needsReview": true,
+              "homepage": "https://dotnet.microsoft.com/download/dotnet"
+            },
+            {
+              "id": "temurin-jdk",
+              "name": "Java - Temurin JDK 25 LTS",
+              "description": "Eclipse Temurin OpenJDK 25 LTS (pinned to 25.0.3+9 - refresh quarterly)",
+              "publisher": "Eclipse Foundation",
+              "url": "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.3%2B9/OpenJDK25U-jdk_x64_windows_hotspot_25.0.3_9.msi",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart ADDLOCAL=FeatureJavaHome,FeatureJarFileExtension,FeatureJavaOptions",
+              "needsReview": true,
+              "homepage": "https://adoptium.net/"
+            }
+          ]
+        },
+        {
+          "name": "Productivity & Security",
+          "hint": "notes, office & antivirus",
+          "apps": [
+            {
+              "id": "obsidian",
+              "name": "Obsidian",
+              "description": "Markdown note-taking and knowledge base",
+              "github": { "repo": "obsidianmd/obsidian-releases", "asset": "^Obsidian-.*\\.exe$" },
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "homepage": "https://obsidian.md/"
+            },
+            {
+              "id": "notion",
+              "name": "Notion",
+              "description": "Notes, docs, wikis and project management",
+              "installerType": "Exe",
+              "silentArgs": "--silent",
+              "needsReview": true,
+              "homepage": "https://www.notion.so/"
+            },
+            {
+              "id": "libreoffice",
+              "name": "LibreOffice",
+              "description": "Free and open-source office suite",
+              "publisher": "The Document Foundation",
+              "url": "https://download.documentfoundation.org/libreoffice/stable/26.2.5/win/x86_64/LibreOffice_26.2.5_Win_x86-64.msi",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
+              "homepage": "https://www.libreoffice.org/"
+            },
+            {
+              "id": "bitdefender",
+              "name": "Bitdefender",
+              "description": "Antivirus - pending installer URL and account sign-in requirement",
+              "publisher": "Bitdefender LLC",
+              "installerType": "Exe",
+              "needsReview": true,
+              "unverified": true,
+              "homepage": "https://www.bitdefender.com/"
+            },
+            {
+              "id": "malwarebytes",
+              "name": "Malwarebytes",
+              "description": "Anti-malware protection (interactive online installer)",
+              "publisher": "Malwarebytes Inc.",
+              "url": "https://downloads.malwarebytes.com/file/mb-windows",
+              "installerType": "Exe",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "needsReview": true,
+              "unverified": true,
+              "homepage": "https://www.malwarebytes.com/"
+            },
+            {
+              "id": "avast",
+              "name": "Avast Free Antivirus",
+              "description": "Free antivirus (online installer - silent flags unverified)",
+              "publisher": "AVAST Software s.r.o.",
+              "url": "https://bits.avcdn.net/productfamily_ANTIVIRUS/insttype_FREE/platform_WIN/installertype_ONLINE/build_RELEASE/avast_free_antivirus_setup_online.exe",
+              "installerType": "Exe",
+              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "needsReview": true,
+              "unverified": true,
+              "homepage": "https://www.avast.com/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "games",
+      "name": "Games",
+      "categories": [
+        {
+          "name": "Launchers",
+          "apps": [
+            {
+              "id": "steam",
+              "name": "Steam",
+              "description": "Valve game store & library",
+              "publisher": "Valve Corp.",
+              "url": "https://cdn.cloudflare.steamstatic.com/client/installer/SteamSetup.exe",
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "homepage": "https://store.steampowered.com/"
+            },
+            {
+              "id": "epic-games",
+              "name": "Epic Games Launcher",
+              "description": "Epic Games store & library",
+              "publisher": "Epic Games, Inc.",
+              "url": "https://launcher-public-service-prod-m.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
+              "needsReview": true,
+              "homepage": "https://www.epicgames.com/"
+            },
+            {
+              "id": "riot-client",
+              "name": "Riot Client",
+              "description": "Required for Valorant, League of Legends and other Riot titles",
+              "publisher": "Riot Games, Inc.",
+              "installerType": "Exe",
+              "silentArgs": "--mode unattended",
+              "needsReview": true,
+              "homepage": "https://www.riotgames.com/"
+            },
+            {
+              "id": "rockstar-launcher",
+              "name": "Rockstar Games Launcher",
+              "description": "Rockstar game store & library - pending URL confirmation",
+              "publisher": "Rockstar Games, Inc.",
+              "installerType": "Exe",
+              "silentArgs": "/S",
+              "needsReview": true,
+              "homepage": "https://socialclub.rockstargames.com/rockstar-games-launcher"
+            },
+            {
+              "id": "prism-launcher",
+              "name": "Prism Launcher",
+              "description": "Custom Minecraft launcher",
+              "github": { "repo": "PrismLauncher/PrismLauncher", "asset": "^PrismLauncher-Windows-MSVC-Setup-.*\\.exe$" },
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://prismlauncher.org/"
+            }
+          ]
+        },
+        {
+          "name": "Games",
+          "apps": [
+            {
+              "id": "osu-lazer",
+              "name": "osu! lazer",
+              "description": "Open-source rhythm game (next-gen client)",
+              "github": { "repo": "ppy/osu", "asset": "^install\\.exe$" },
+              "installerType": "Exe",
+              "silentArgs": "--silent",
+              "unverified": true,
+              "needsReview": true,
+              "homepage": "https://osu.net/sh/home"
+            }
+          ]
+        },
+        {
+          "name": "Gaming Tools",
+          "apps": [
+            {
+              "id": "msi-afterburner",
+              "name": "MSI Afterburner",
+              "description": "GPU overclocking & monitoring (bundles RivaTuner Statistics Server) - pending URL confirmation",
+              "publisher": "Micro-Star Int'l Co., Ltd.",
+              "installerType": "Exe",
+              "silentArgs": "/S",
+              "needsReview": true,
+              "homepage": "https://www.msi.com/Landing/afterburner/graphics-cards/en"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+<Application x:Class="EpicSetup.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cv="clr-namespace:EpicSetup.Converters"
+             StartupUri="Windows/MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Dark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <cv:InverseBooleanToVisibilityConverter x:Key="InvBoolVis" />
+            <cv:BooleanToVisibilityConverter x:Key="BoolVis" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
