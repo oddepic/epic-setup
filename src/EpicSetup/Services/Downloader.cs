@@ -4,13 +4,20 @@ using System.Net.Http;
 
 namespace EpicSetup.Services;
 
+public readonly struct DownloadProgressInfo
+{
+    public long Downloaded { get; init; }
+    public long Total { get; init; }
+    public double Fraction => Total > 0 ? Math.Min(1.0, (double)Downloaded / Total) : 0;
+}
+
 public sealed class Downloader
 {
     private readonly HttpClient _http;
     public Downloader() : this(Http.Client) { }
     public Downloader(HttpClient http) => _http = http;
 
-    public async Task DownloadToFileAsync(Uri url, string destPath, IProgress<long>? progress, CancellationToken ct)
+    public async Task DownloadToFileAsync(Uri url, string destPath, IProgress<DownloadProgressInfo>? progress, CancellationToken ct)
     {
         var dir = Path.GetDirectoryName(destPath);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
@@ -31,7 +38,7 @@ public sealed class Downloader
             {
                 await fs.WriteAsync(buffer.AsMemory(0, n), ct);
                 read += n;
-                progress?.Report(read);
+                progress?.Report(new DownloadProgressInfo { Downloaded = read, Total = total });
             }
         }
 

@@ -70,7 +70,7 @@
                 <ItemsControl ItemsSource="{Binding Categories}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <ctl:MasonryPanel ItemWidth="322" />
+                            <ctl:MasonryPanel MaxItemWidth="440" ColumnGap="22" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -112,7 +112,7 @@
                                             <DataTemplate DataType="{x:Type vm:AppEntryVm}">
                                                 <Border Style="{StaticResource AppRow}">
                                                     <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"
-                                                              ToolTip="{Binding Description}">
+                                                              ToolTip="{Binding SizeLabel}">
                                                         <CheckBox.Content>
                                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                                 <!-- Icon / letter chip -->
@@ -176,6 +176,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Remove button (left) -->
@@ -198,40 +199,29 @@
                                             </Border>
                                         </StackPanel>
 
-                                        <!-- Name + status text -->
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                                            <TextBlock Style="{StaticResource AppNameText}" Text="{Binding Name}"
-                                                       VerticalAlignment="Center"/>
-                                            <TextBlock Margin="12,0,0,0"
-                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                                                       Visibility="{Binding StatusText, Converter={StaticResource NullToCollapsed}}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource TinyMonoText}">
-                                                        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Succeeded}">
-                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Failed}">
-                                                                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Downloading}">
-                                                                <Setter Property="Foreground" Value="{StaticResource InfoBrush}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Verifying}">
-                                                                <Setter Property="Foreground" Value="{StaticResource InfoBrush}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Installing}">
-                                                                <Setter Property="Foreground" Value="{StaticResource InfoBrush}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
+                                        <!-- Name -->
+                                        <TextBlock Grid.Column="2" Style="{StaticResource AppNameText}" Text="{Binding Name}"
+                                                   VerticalAlignment="Center" Margin="10,0,0,0"/>
+
+                                        <!-- Error message (right-aligned, left of the dot, only on failure) -->
+                                        <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                   Text="{Binding StatusText}" TextTrimming="CharacterEllipsis"
+                                                   TextAlignment="Right" MaxWidth="340">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource TinyMonoText}">
+                                                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Failed}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
 
                                         <!-- Status dot (right) -->
-                                        <Ellipse Grid.Column="3" VerticalAlignment="Center" Margin="10,0,4,0">
+                                        <Ellipse Grid.Column="4" VerticalAlignment="Center" Margin="0,0,4,0">
                                             <Ellipse.Style>
                                                 <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDot}">
                                                     <Setter Property="Fill" Value="{StaticResource TextMutedBrush}"/>
@@ -264,34 +254,42 @@
             </Grid>
         </Grid>
 
-        <!-- ===================== Progress bar (above footer) ===================== -->
-        <StackPanel Grid.Row="2" Visibility="{Binding IsInstalling, Converter={StaticResource BoolVis}}">
-            <Grid Margin="18,0,18,8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <ProgressBar Grid.Column="0" Maximum="1" Value="{Binding OverallProgress}"/>
-                <TextBlock Grid.Column="1" Style="{StaticResource TinyMonoText}" Margin="10,0,0,0"
-                           VerticalAlignment="Center" Text="{Binding ProgressDetail}" TextTrimming="CharacterEllipsis"/>
-            </Grid>
-        </StackPanel>
-
         <!-- ===================== Footer ===================== -->
         <Border Grid.Row="2" Padding="20,12" Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
             <Grid>
-                <TextBlock Text="{Binding StatusText}" Style="{StaticResource SmallMuted}"
-                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- Select step: Continue button -->
-                <Button Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"
+                <!-- Left: status text, or download progress bar + percent while installing -->
+                <Grid Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource SmallMuted}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding InstalledAppsTooltip}"
+                               Visibility="{Binding IsInstalling, Converter={StaticResource InvBoolVis}}"/>
+                    <Grid Visibility="{Binding IsInstalling, Converter={StaticResource BoolVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding DownloadPercentText}"
+                                   Style="{StaticResource TinyMonoText}"
+                                   TextAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <ProgressBar Grid.Column="1" Maximum="1" Value="{Binding DownloadProgress}"
+                                     VerticalAlignment="Center"/>
+                    </Grid>
+                </Grid>
+
+                <!-- Right: Select step Continue button -->
+                <Button Grid.Column="1" Style="{StaticResource PrimaryButton}"
                         Content="{Binding ContinueLabel}"
                         Command="{Binding ContinueCommand}"
                         Visibility="{Binding IsReviewing, Converter={StaticResource InvBoolVis}}"/>
 
-                <!-- Review step: Back + Install -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                <!-- Right: Review step Back + Install -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal"
                             Visibility="{Binding IsReviewing, Converter={StaticResource BoolVis}}">
                     <Button Style="{StaticResource GhostButton}" Content="Back"
                             Command="{Binding BackCommand}" Margin="0,0,8,0"

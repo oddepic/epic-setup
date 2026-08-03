@@ -16,3 +16,9 @@ artifacts/
 
 # Local runtime cache for the app (dev runs)
 epic-setup.cache.json
+
+# Ignorar todos los archivos .md en cualquier carpeta
+*.md
+
+# Excepción: No Muestres/Ignores el README.md principal
+!README.md

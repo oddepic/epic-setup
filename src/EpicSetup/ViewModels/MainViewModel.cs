@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -27,9 +28,32 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isReviewing;
     [ObservableProperty] private bool _isInstalling;
     [ObservableProperty] private double _overallProgress;
+    [ObservableProperty] private double _downloadProgress;
     [ObservableProperty] private string _statusText = "Loading catalog…";
     [ObservableProperty] private string _progressDetail = "";
     [ObservableProperty] private string _catalogSourceText = "";
+
+    public string DownloadPercentText => $"{(int)Math.Round(DownloadProgress * 100)}%";
+
+    // Tooltip shown when hovering the "X installed" status text: lists the
+    // names of all apps that installed successfully (one per line).
+    public string InstalledAppsTooltip
+    {
+        get
+        {
+            var names = _allApps
+                .Where(a => a.Status == AppStatus.Succeeded)
+                .OrderBy(a => a.Name)
+                .Select(a => a.Name)
+                .ToList();
+            return names.Count == 0 ? "" : string.Join("\n", names);
+        }
+    }
+
+    private void NotifyInstalledAppsTooltip() => OnPropertyChanged(nameof(InstalledAppsTooltip));
+
+    partial void OnDownloadProgressChanged(double value)
+        => OnPropertyChanged(nameof(DownloadPercentText));
 
     public string ContinueLabel => $"Continue ({SelectedCount}/{TotalCount})";
 
@@ -182,6 +206,7 @@ public partial class MainViewModel : ObservableObject
         {
             IsInstalling = false;
             InstallCommand.NotifyCanExecuteChanged();
+            NotifyInstalledAppsTooltip();
         }
     }
 
@@ -190,12 +215,51 @@ public partial class MainViewModel : ObservableObject
         if (!string.IsNullOrEmpty(u.AppId))
         {
             var appVm = _allApps.FirstOrDefault(a => a.Id == u.AppId);
-            if (appVm != null) appVm.SetStatus(u.Status, Label(u.Status, u.Message));
+            if (appVm != null)
+            {
+                appVm.SetStatus(u.Status, Label(u.Status, u.Message));
+                NotifyInstalledAppsTooltip();
+            }
+            AppendLog($"{u.AppId} | {u.Status} | {u.Message}");
         }
+        else
+        {
+            AppendLog($"--- {u.Status} | {u.Message}");
+        }
+        if (u.Status == AppStatus.Downloading)
+            DownloadProgress = u.DownloadFraction;
         OverallProgress = u.Fraction;
         ProgressDetail = u.Message ?? "";
         if (u.AppId is null && u.Status == AppStatus.Succeeded)
             StatusText = u.Message ?? "Done.";
+    }
+
+    // Live install log at %LOCALAPPDATA%\EpicSetup\install.log - contains the
+    // FULL raw messages (not the shortened UI text), so failures are checkable.
+    private string? _lastLoggedLine;
+
+    private void AppendLog(string line)
+    {
+        try
+        {
+            // Dedupe consecutive identical lines: this drops the constant stream
+            // of "Downloading ..." byte-progress updates, keeping exactly one line
+            // per meaningful state change (Downloading -> Verifying -> Installing
+            // -> Succeeded/Failed). Keeps the log small.
+            if (line == _lastLoggedLine) return;
+            _lastLoggedLine = line;
+
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicSetup");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, "install.log");
+
+            // Bounded: start fresh if the log ever outgrows 1 MB.
+            if (File.Exists(path) && new FileInfo(path).Length > 1024 * 1024)
+                File.WriteAllText(path, "");
+
+            File.AppendAllText(path, $"[{DateTime.Now:HH:mm:ss}] {line}\n");
+        }
+        catch { }
     }
 
     private static string Label(AppStatus s, string? msg) => s switch
@@ -205,10 +269,21 @@ public partial class MainViewModel : ObservableObject
         AppStatus.Verifying => "Verifying signature…",
         AppStatus.Installing => "Installing…",
         AppStatus.Succeeded => msg ?? "Installed",
-        AppStatus.Failed => "Failed: " + msg,
+        AppStatus.Failed => "Failed: " + ShortenReason(msg),
         AppStatus.Skipped => msg ?? "Skipped",
         _ => s.ToString()
     };
+
+    // Keep only the first reason clause of a failure message (cut at the first
+    // ": "), so we show e.g. "Unexpected publisher." instead of the full detail
+    // / expected-signers list. Messages without a sub-clause stay whole.
+    private static string ShortenReason(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return "Unknown error.";
+        int idx = message.IndexOf(": ", StringComparison.Ordinal);
+        if (idx >= 0) message = message[..idx];
+        return message.TrimEnd(' ', '.') + ".";
+    }
 
     private bool CanInstall() => IsReviewing && ReviewItems.Count > 0 && !IsInstalling;
 
