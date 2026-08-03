@@ -5,70 +5,122 @@ namespace EpicSetup.Controls;
 
 public sealed class MasonryPanel : Panel
 {
-    public static readonly DependencyProperty ItemWidthProperty =
-        DependencyProperty.Register(nameof(ItemWidth), typeof(double), typeof(MasonryPanel),
-            new FrameworkPropertyMetadata(322.0, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsArrange));
+    public static readonly DependencyProperty MaxItemWidthProperty =
+        DependencyProperty.Register(nameof(MaxItemWidth), typeof(double), typeof(MasonryPanel),
+            new FrameworkPropertyMetadata(440.0, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsArrange));
 
-    public double ItemWidth
+    public static readonly DependencyProperty ColumnGapProperty =
+        DependencyProperty.Register(nameof(ColumnGap), typeof(double), typeof(MasonryPanel),
+            new FrameworkPropertyMetadata(22.0, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsArrange));
+
+    public double MaxItemWidth
     {
-        get => (double)GetValue(ItemWidthProperty);
-        set => SetValue(ItemWidthProperty, value);
+        get => (double)GetValue(MaxItemWidthProperty);
+        set => SetValue(MaxItemWidthProperty, value);
     }
 
-    private List<List<UIElement>>? _columns;
+    public double ColumnGap
+    {
+        get => (double)GetValue(ColumnGapProperty);
+        set => SetValue(ColumnGapProperty, value);
+    }
+
+    private sealed class Layout
+    {
+        public List<List<UIElement>> Cols = new();
+        public List<double> ColWidths = new();
+        public double MaxHeight;
+        public double TotalWidth;
+    }
+
+    private Layout? _layout;
 
     protected override Size MeasureOverride(Size availableSize)
     {
-        double itemWidth = ItemWidth;
-        int columnCount = Math.Max(1, (int)Math.Floor((availableSize.Width > 0 ? availableSize.Width : itemWidth) / itemWidth));
-        columnCount = Math.Min(columnCount, InternalChildren.Count > 0 ? InternalChildren.Count : 1);
+        double maxItemW = MaxItemWidth;
+        double gap = ColumnGap;
+        bool infiniteW = double.IsInfinity(availableSize.Width);
+        double availW = infiniteW ? double.MaxValue : availableSize.Width;
 
-        _columns = new List<List<UIElement>>(columnCount);
-        for (int i = 0; i < columnCount; i++) _columns.Add(new List<UIElement>());
+        // Measure each child at its natural width (capped at MaxItemWidth) and infinite height.
+        foreach (UIElement child in InternalChildren)
+            child.Measure(new Size(maxItemW, double.PositiveInfinity));
 
-        // Balance by assigning each child to the currently-shortest column.
-        var colHeights = new double[columnCount];
+        int childCount = InternalChildren.Count;
+        if (childCount == 0) { _layout = new Layout(); return new Size(); }
+
+        int cMax = Math.Min(childCount, 8);
+        Layout? chosen = null;
+        int chosenC = 1;
+
+        for (int c = cMax; c >= 1; c--)
+        {
+            var layout = Distribute(c);
+            double total = layout.TotalWidth + (c - 1) * gap;
+            if (total <= availW) { chosen = layout; chosenC = c; break; }
+        }
+        if (chosen == null) { chosen = Distribute(1); chosenC = 1; }
+
+        _layout = chosen;
+        double desiredW = Math.Min(chosen.TotalWidth + (chosenC - 1) * gap, availW);
+        if (infiniteW) desiredW = chosen.TotalWidth + (chosenC - 1) * gap;
+        return new Size(desiredW, chosen.MaxHeight);
+    }
+
+    private Layout Distribute(int columnCount)
+    {
+        var layout = new Layout();
+        for (int i = 0; i < columnCount; i++) { layout.Cols.Add(new List<UIElement>()); layout.ColWidths.Add(0); }
+        var heights = new double[columnCount];
+
         foreach (UIElement child in InternalChildren)
         {
-            child.Measure(new Size(itemWidth, double.PositiveInfinity));
-            double h = child.DesiredSize.Height;
-
             int target = 0;
             for (int i = 1; i < columnCount; i++)
-                if (colHeights[i] < colHeights[target]) target = i;
+                if (heights[i] < heights[target]) target = i;
 
-            _columns[target].Add(child);
-            colHeights[target] += h;
+            layout.Cols[target].Add(child);
+            heights[target] += child.DesiredSize.Height;
+            double w = child.DesiredSize.Width;
+            if (w > layout.ColWidths[target]) layout.ColWidths[target] = w;
         }
 
-        double maxH = 0;
-        foreach (var h in colHeights) if (h > maxH) maxH = h;
-
-        double totalW = columnCount * itemWidth;
-        if (!double.IsInfinity(availableSize.Width) && totalW > availableSize.Width)
-            totalW = columnCount * itemWidth; // keep requested width even if rounded
-
-        return new Size(Math.Min(totalW, double.IsInfinity(availableSize.Width) ? totalW : availableSize.Width), maxH);
+        double total = 0;
+        foreach (var w in layout.ColWidths) total += w;
+        layout.TotalWidth = total;
+        layout.MaxHeight = heights.Length > 0 ? heights.Max() : 0;
+        return layout;
     }
 
     protected override Size ArrangeOverride(Size finalSize)
     {
-        double itemWidth = ItemWidth;
-        if (_columns == null) return finalSize;
+        // Clamp to non-negative: WPF can pass (0,0) or negative sizes during
+        // window setup / empty-content layout passes. Size/Rect ctor throw on negatives.
+        double finalW = Math.Max(0, finalSize.Width);
+        double finalH = Math.Max(0, finalSize.Height);
 
-        for (int c = 0; c < _columns.Count; c++)
+        if (_layout == null || _layout.Cols.Count == 0)
+            return new Size(finalW, finalH);
+
+        double gap = ColumnGap;
+        double x = 0;
+
+        for (int c = 0; c < _layout.Cols.Count; c++)
         {
-            double x = c * itemWidth;
+            double cw = _layout.ColWidths[c];
+            if (cw > finalW) cw = finalW; // narrow window: clamp so the star-trim header handles it
+            cw = Math.Max(0, cw);
             double y = 0;
-            foreach (var child in _columns[c])
+            foreach (var child in _layout.Cols[c])
             {
-                double h = child.DesiredSize.Height;
-                child.Arrange(new Rect(x, y, itemWidth, h));
+                double h = Math.Max(0, child.DesiredSize.Height);
+                child.Arrange(new Rect(x, y, cw, h));
                 y += h;
             }
+            x += cw + gap;
         }
 
-        double totalW = _columns.Count * itemWidth;
-        return new Size(Math.Min(totalW, finalSize.Width), finalSize.Height);
+        double used = x - gap;
+        return new Size(Math.Max(0, Math.Min(used, finalW)), finalH);
     }
 }

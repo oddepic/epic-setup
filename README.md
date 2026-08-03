@@ -25,15 +25,17 @@ dotnet publish src/EpicSetup/EpicSetup.csproj -c Release -r win-x64 --self-conta
 
 Git tag → GitHub Actions builds and attaches the exe to the Release.
 
-## Live catalog (opt-in)
+## Live catalog
 
-By default the app uses only the embedded catalog. Set env vars to fetch a remote one from your own repo:
+The app fetches `catalog.json` from `https://raw.githubusercontent.com/oddepic/epic-setup/main/catalog.json` at startup, so you can update apps (add/edit catalog entries) by pushing to your repo — no new release needed. If the remote fetch fails (offline, repo not yet created), it falls back to the embedded catalog baked into the exe. Override the source with env vars:
 
 ```pwsh
-setx EPICSETUP_CATALOG_OWNER your-github-username
+setx EPICSETUP_CATALOG_OWNER oddepic
 setx EPICSETUP_CATALOG_REPO   epic-setup
 setx EPICSETUP_CATALOG_BRANCH main
 ```
+
+(These are already the defaults — only set them if you fork the repo to a different location.)
 
 ## Safety
 

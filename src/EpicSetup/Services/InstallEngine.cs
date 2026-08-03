@@ -12,6 +12,7 @@ public sealed class InstallUpdate
     public int Total { get; init; }
     public int Succeeded { get; init; }
     public int Failed { get; init; }
+    public double DownloadFraction { get; init; }   // 0..1 byte progress of the current download
     public double Fraction => Total == 0 ? 0 : (double)Completed / Total;
 }
 
@@ -80,7 +81,19 @@ public sealed class InstallEngine
             try
             {
                 Report(progress, app.Id, AppStatus.Downloading, $"Downloading {localName}...", completed, total);
-                await _downloader.DownloadToFileAsync(new Uri(url), path, null, ct);
+                var downloadProgress = new Progress<DownloadProgressInfo>(dp =>
+                    progress?.Report(new InstallUpdate
+                    {
+                        AppId = app.Id,
+                        Status = AppStatus.Downloading,
+                        Message = $"Downloading {localName}...",
+                        Completed = completed,
+                        Total = total,
+                        Succeeded = _succeeded,
+                        Failed = _failed,
+                        DownloadFraction = dp.Fraction
+                    }));
+                await _downloader.DownloadToFileAsync(new Uri(url), path, downloadProgress, ct);
 
                 Report(progress, app.Id, AppStatus.Verifying, "Verifying digital signature...", completed, total);
                 var v = _verifier.Verify(path);
@@ -96,11 +109,11 @@ public sealed class InstallEngine
                 var expected = new[] { app.Publisher }.Where(s => !string.IsNullOrEmpty(s)).Cast<string>()
                     .Concat(app.Signers).ToList();
                 if (expected.Count > 0 &&
-                    !SignatureVerifier.MatchesAnySigner(v.Signer, expected))
+                    !SignatureVerifier.MatchesAnySigner(v, expected))
                 {
                     completed++; _failed++;
                     Report(progress, app.Id, AppStatus.Failed,
-                        $"Unexpected publisher: '{v.Signer ?? "(none)"}'. Expected one of: {string.Join(", ", expected)}.",
+                        $"Unexpected publisher: CN='{v.Signer ?? "(none)"}', O='{v.Organization ?? "(none)"}'. Expected one of: {string.Join(", ", expected)}.",
                         completed, total);
                     SafeDelete(path);
                     continue;

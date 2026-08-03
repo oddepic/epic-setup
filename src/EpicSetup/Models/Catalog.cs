@@ -49,6 +49,7 @@ public sealed class AppEntry
     [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
     [JsonPropertyName("description")] public string? Description { get; set; }
+    [JsonPropertyName("size")] public int? Size { get; set; }   // estimated full app size in MB (for the hover tooltip)
     [JsonPropertyName("icon")] public string? Icon { get; set; }   // optional explicit icon URL; else derived from homepage
     [JsonPropertyName("publisher")] public string? Publisher { get; set; }   // expected signer subject CN substring
     [JsonPropertyName("signers")] public List<string> Signers { get; set; } = new(); // alternative accepted signers

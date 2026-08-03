@@ -10,6 +10,7 @@ namespace EpicSetup.Services;
 
 public sealed class CatalogService
 {
+    public const string DefaultOwner = "oddepic";   // the owner's GitHub username - live catalog source
     public const string DefaultRepo = "epic-setup";
     public const string DefaultBranch = "main";
 
@@ -22,14 +23,14 @@ public sealed class CatalogService
     public CatalogService() : this(Http.Client) { }
     public CatalogService(HttpClient http) => _http = http;
 
-    // Remote fetch is OPT-IN. Only when EPICSETUP_CATALOG_OWNER is explicitly set
-    // do we ever reach out to raw.githubusercontent.com. Otherwise we use the
-    // embedded catalog so we can never silently load a third party's file.
-    public string? Owner => Environment.GetEnvironmentVariable("EPICSETUP_CATALOG_OWNER");
+    // Live catalog source: defaults to the owner's repo (oddepic/epic-setup).
+    // Override with env vars if the repo moves. Remote failure falls back to
+    // the disk cache, then to the embedded catalog - never a third party's file.
+    public string Owner => Environment.GetEnvironmentVariable("EPICSETUP_CATALOG_OWNER") ?? DefaultOwner;
     public string Repo => Environment.GetEnvironmentVariable("EPICSETUP_CATALOG_REPO") ?? DefaultRepo;
     public string Branch => Environment.GetEnvironmentVariable("EPICSETUP_CATALOG_BRANCH") ?? DefaultBranch;
 
-    public bool RemoteEnabled => !string.IsNullOrWhiteSpace(Owner);
+    public bool RemoteEnabled => true;
 
     public Uri RemoteUri => new($"https://raw.githubusercontent.com/{Owner}/{Repo}/{Branch}/catalog.json");
 
