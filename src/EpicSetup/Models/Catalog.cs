@@ -40,6 +40,7 @@ public enum AppInstallerType
     Burn,       // WiX bundles /quiet
     Exe,        // generic: pass SilentArgs only
     Portable,   // just extract/copy exe to a folder (no installer)
+    Zip,        // extract an archive to a folder (no installer)
     Script,     // run a script (powershell) - trusted source only
     WingetUpdate
 }
@@ -64,6 +65,8 @@ public sealed class AppEntry
     [JsonPropertyName("arch")] public string? Arch { get; set; } = "x64";
     [JsonPropertyName("unverified")] public bool Unverified { get; set; }   // unsigned-but-pinned (badge)
     [JsonPropertyName("needsReview")] public bool NeedsReview { get; set; }   // URL/signer not yet confirmed (warning)
+    [JsonPropertyName("needsUserSetup")] public bool NeedsUserSetup { get; set; } // installer needs interaction/account — show tag, skip auto-install
+    [JsonPropertyName("sha256")] public string? Sha256 { get; set; }   // pinned SHA-256 of the installer (gate for trusted unsigned apps)
     [JsonPropertyName("homepage")] public string? Homepage { get; set; }
 
     [JsonIgnore] public AppInstallerType ParsedType =>

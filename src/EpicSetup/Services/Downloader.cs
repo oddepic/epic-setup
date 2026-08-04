@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace EpicSetup.Services;
 
@@ -82,6 +84,22 @@ public sealed class Downloader
     private static void TryDelete(string path)
     {
         try { if (File.Exists(path)) File.Delete(path); } catch { }
+    }
+
+    /// <summary>Lowercase hex SHA-256 of a file (used for catalog hash pinning).</summary>
+    public static string ComputeSha256(string filePath)
+    {
+        using var fs = File.OpenRead(filePath);
+        using var sha = SHA256.Create();
+        return Convert.ToHexString(sha.ComputeHash(fs)).ToLowerInvariant();
+    }
+
+    /// <summary>True if the file's SHA-256 equals the pinned (lowercase hex) hash.</summary>
+    public static bool HashMatches(string filePath, string? pinned)
+    {
+        if (string.IsNullOrWhiteSpace(pinned)) return false;
+        try { return ComputeSha256(filePath).Equals(pinned.Trim().ToLowerInvariant(), StringComparison.Ordinal); }
+        catch { return false; }
     }
 
     public static string SafeFileNameFromUrl(Uri url)

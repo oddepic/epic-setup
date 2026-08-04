@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using EpicSetup.Models;
 
@@ -36,19 +37,20 @@ public sealed class SilentInstaller
         }
 
         int timeout = app.InstallTimeoutSeconds ?? DefaultInstallTimeoutSeconds;
+        var log = InstallerLogPath(app);
 
         switch (type)
         {
             case AppInstallerType.Msi:
                 return await RunProcessAsync("msiexec.exe",
-                    $"/i \"{localPath}\" {app.SilentArgs?.Trim() ?? "/quiet /norestart INSTALLUSERCONTEXT=1"}",
+                    $"/i \"{localPath}\" {app.SilentArgs?.Trim() ?? "/quiet /norestart INSTALLUSERCONTEXT=1"} /l*v \"{log}\"",
                     Path.GetDirectoryName(localPath)!, timeout, ct);
 
             case AppInstallerType.Inno:
                 return await RunProcessAsync(localPath,
-                    app.SilentArgs?.Trim().Length > 0
+                    WithLogFlag(app.SilentArgs?.Trim().Length > 0
                         ? app.SilentArgs
-                        : "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-",
+                        : "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-", log, "/LOG=\"{0}\""),
                     timeout, ct);
 
             case AppInstallerType.Nsis:
@@ -57,7 +59,8 @@ public sealed class SilentInstaller
                     timeout, ct);
 
             case AppInstallerType.Burn:
-                return await RunProcessAsync(localPath, app.SilentArgs ?? "/quiet", timeout, ct);
+                return await RunProcessAsync(localPath,
+                    WithLogFlag(app.SilentArgs ?? "/quiet", log, "/l*v \"{0}\""), timeout, ct);
 
             case AppInstallerType.Exe:
                 if (app.RunAsUser)
@@ -66,6 +69,9 @@ public sealed class SilentInstaller
 
             case AppInstallerType.Portable:
                 return DeployPortable(app, localPath);
+
+            case AppInstallerType.Zip:
+                return DeployZip(app, localPath);
 
             case AppInstallerType.Script:
                 return await RunScriptAsync(app.SilentArgs ?? "", timeout, ct);
@@ -80,6 +86,21 @@ public sealed class SilentInstaller
             default:
                 return await RunProcessAsync(localPath, app.SilentArgs ?? "", timeout, ct);
         }
+    }
+
+    private static string InstallerLogPath(AppEntry app)
+    {
+        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "EpicSetup", "logs");
+        try { Directory.CreateDirectory(dir); } catch { }
+        return Path.Combine(dir, app.Id + ".log");
+    }
+
+    private static string WithLogFlag(string args, string logPath, string fmt)
+    {
+        if (string.IsNullOrEmpty(args)) args = "";
+        if (args.IndexOf("/log", StringComparison.OrdinalIgnoreCase) >= 0) return args;
+        return (args + " " + string.Format(fmt, logPath)).Trim();
     }
 
     /// <summary>Kills any running process matching the catalog's closeApps names.</summary>
@@ -383,6 +404,32 @@ public sealed class SilentInstaller
         Directory.CreateDirectory(root);
         var dest = Path.Combine(root, Path.GetFileName(localPath));
         File.Copy(localPath, dest, true);
+        return new RunResult { ExitCode = 0 };
+    }
+
+    /// <summary>Extracts a .zip archive to %LOCALAPPDATA%\Programs\{portableSubdir}.</summary>
+    private static RunResult DeployZip(AppEntry app, string localPath)
+    {
+        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Programs", app.PortableSubdir ?? app.Id);
+        Directory.CreateDirectory(root);
+
+        var fullRoot = Path.GetFullPath(root);
+        using var zip = ZipFile.OpenRead(localPath);
+        foreach (var entry in zip.Entries)
+        {
+            var target = Path.GetFullPath(Path.Combine(fullRoot, entry.FullName));
+            // zip-slip guard: never write outside the destination folder
+            if (!target.StartsWith(fullRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (entry.FullName.EndsWith("/", StringComparison.Ordinal))
+            {
+                Directory.CreateDirectory(target);
+                continue;
+            }
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            entry.ExtractToFile(target, overwrite: true);
+        }
         return new RunResult { ExitCode = 0 };
     }
 }
