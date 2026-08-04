@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using EpicSetup.Models;
 
 namespace EpicSetup.Services;
@@ -59,6 +60,8 @@ public sealed class SilentInstaller
                 return await RunProcessAsync(localPath, app.SilentArgs ?? "/quiet", timeout, ct);
 
             case AppInstallerType.Exe:
+                if (app.RunAsUser)
+                    return await RunUnelevatedAsync(localPath, app.SilentArgs ?? "", timeout, ct);
                 return await RunProcessAsync(localPath, app.SilentArgs ?? "", timeout, ct);
 
             case AppInstallerType.Portable:
@@ -182,6 +185,196 @@ public sealed class SilentInstaller
         try { if (!p.HasExited) p.Kill(entireProcessTree: true); } catch { }
         try { p.WaitForExit(3000); } catch { }
     }
+
+    /// <summary>
+    /// Runs an installer with a medium-integrity, privilege-restricted token so
+    /// per-user Squirrel installers (Spotify) don't refuse to run as admin.
+    /// </summary>
+    private static async Task<RunResult> RunUnelevatedAsync(string fileName, string arguments,
+        int timeoutSeconds, CancellationToken ct)
+    {
+        var p = StartUnelevated(fileName, arguments ?? "");
+        if (p is null)
+            return new RunResult { ExitCode = -1 };
+
+        using (p)
+        using (var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
+        {
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+            try
+            {
+                await p.WaitForExitAsync(timeoutCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                KillTree(p);
+                if (ct.IsCancellationRequested) throw;
+                return new RunResult { ExitCode = -1, TimedOut = true };
+            }
+            return new RunResult { ExitCode = p.ExitCode };
+        }
+    }
+
+    private static Process? StartUnelevated(string fileName, string arguments)
+    {
+        if (!OpenProcessToken(GetCurrentProcess(), TokenDuplicate | TokenAssignPrimary | TokenQuery, out var hToken))
+            return null;
+        try
+        {
+            if (!DuplicateTokenEx(hToken, TokenAllAccess, IntPtr.Zero, SecurityImpersonation, TokenPrimary, out var hDup))
+                return null;
+            try
+            {
+                if (!CreateRestrictedToken(hDup, DisableMaxPrivilege, 0, null, 0, null, 0, null, out var hRestricted))
+                    return null;
+                try
+                {
+                    if (!ConvertStringSidToSid("S-1-16-8192", out var pMediumSid)) // Medium integrity
+                        return null;
+                    try
+                    {
+                        var label = new TOKEN_MANDATORY_LABEL
+                        {
+                            Label = new SID_AND_ATTRIBUTES { Sid = pMediumSid, Attributes = SeGroupIntegrity }
+                        };
+                        int size = Marshal.SizeOf<TOKEN_MANDATORY_LABEL>();
+                        IntPtr pLabel = Marshal.AllocHGlobal(size);
+                        try
+                        {
+                            Marshal.StructureToPtr(label, pLabel, false);
+                            if (!SetTokenInformation(hRestricted, TokenIntegrityLevel, pLabel, size))
+                                return null;
+                        }
+                        finally { Marshal.FreeHGlobal(pLabel); }
+
+                        var si = new STARTUPINFOW
+                        {
+                            cb = Marshal.SizeOf<STARTUPINFOW>(),
+                            dwFlags = StartfUseShowWindow,
+                            wShowWindow = 0 // SW_HIDE
+                        };
+                        var cmd = new System.Text.StringBuilder($"\"{fileName}\" {arguments}".Trim());
+                        if (!CreateProcessWithTokenW(hRestricted, LogonWithProfile, null, cmd,
+                                CreateNoWindow, IntPtr.Zero, null, ref si, out var pi))
+                            return null;
+                        try
+                        {
+                            var proc = Process.GetProcessById(pi.dwProcessId);
+                            CloseHandle(pi.hProcess);
+                            CloseHandle(pi.hThread);
+                            return proc;
+                        }
+                        catch
+                        {
+                            CloseHandle(pi.hProcess);
+                            CloseHandle(pi.hThread);
+                            return null;
+                        }
+                    }
+                    finally { FreeSid(pMediumSid); }
+                }
+                finally { CloseHandle(hRestricted); }
+            }
+            finally { CloseHandle(hDup); }
+        }
+        finally { CloseHandle(hToken); }
+    }
+
+    #region De-elevation P/Invoke
+
+    private const uint TokenQuery = 0x0008;
+    private const uint TokenDuplicate = 0x0002;
+    private const uint TokenAssignPrimary = 0x0001;
+    private const uint TokenAllAccess = 0x000F01FF;
+    private const uint DisableMaxPrivilege = 0x1;
+    private const int SecurityImpersonation = 2;
+    private const int TokenPrimary = 1;
+    private const int TokenIntegrityLevel = 25;
+    private const uint SeGroupIntegrity = 0x00000020;
+    private const uint CreateNoWindow = 0x08000000;
+    private const uint LogonWithProfile = 0x00000001;
+    private const uint StartfUseShowWindow = 0x00000001;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SID_AND_ATTRIBUTES
+    {
+        public IntPtr Sid;
+        public uint Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct TOKEN_MANDATORY_LABEL
+    {
+        public SID_AND_ATTRIBUTES Label;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct STARTUPINFOW
+    {
+        public int cb;
+        public string? lpReserved;
+        public string? lpDesktop;
+        public string? lpTitle;
+        public int dwX;
+        public int dwY;
+        public int dwXSize;
+        public int dwYSize;
+        public int dwXCountChars;
+        public int dwYCountChars;
+        public int dwFillAttribute;
+        public uint dwFlags;
+        public short wShowWindow;
+        public short cbReserved2;
+        public IntPtr lpReserved2;
+        public IntPtr hStdInput;
+        public IntPtr hStdOutput;
+        public IntPtr hStdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PROCESS_INFORMATION
+    {
+        public IntPtr hProcess;
+        public IntPtr hThread;
+        public int dwProcessId;
+        public int dwThreadId;
+    }
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern bool OpenProcessToken(IntPtr processHandle, uint desiredAccess, out IntPtr tokenHandle);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern bool DuplicateTokenEx(IntPtr hExistingToken, uint dwDesiredAccess,
+        IntPtr lpTokenAttributes, int impersonationLevel, int tokenType, out IntPtr phNewToken);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern bool CreateRestrictedToken(IntPtr existingToken, uint flags,
+        uint disallowSidCount, IntPtr[]? sidsToDisallow, uint restrictSidCount, IntPtr[]? sidsToRestrict,
+        uint privilegesCount, IntPtr[]? privilegesToDelete, out IntPtr newToken);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern bool SetTokenInformation(IntPtr tokenHandle, int tokenInformationClass,
+        IntPtr tokenInformation, int tokenInformationLength);
+
+    [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool ConvertStringSidToSid(string stringSid, out IntPtr sid);
+
+    [DllImport("advapi32.dll")]
+    private static extern IntPtr FreeSid(IntPtr sid);
+
+    [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool CreateProcessWithTokenW(IntPtr hToken, uint dwLogonFlags,
+        string? lpApplicationName, System.Text.StringBuilder lpCommandLine, uint dwCreationFlags,
+        IntPtr lpEnvironment, string? lpCurrentDirectory, ref STARTUPINFOW lpStartupInfo,
+        out PROCESS_INFORMATION lpProcessInformation);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr hObject);
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr GetCurrentProcess();
+
+    #endregion
 
     private static RunResult DeployPortable(AppEntry app, string localPath)
     {
