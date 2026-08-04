@@ -58,6 +58,8 @@ public sealed class AppEntry
     [JsonPropertyName("installerType")] public string? InstallerTypeName { get; set; } = "Auto";
     [JsonPropertyName("silentArgs")] public string? SilentArgs { get; set; }
     [JsonPropertyName("portableSubdir")] public string? PortableSubdir { get; set; } // e.g. Programs\<id>
+    [JsonPropertyName("closeApps")] public List<string> CloseApps { get; set; } = new(); // process names (no .exe) killed before install if running
+    [JsonPropertyName("installTimeoutSeconds")] public int? InstallTimeoutSeconds { get; set; } // installer wait bound; default 600
     [JsonPropertyName("arch")] public string? Arch { get; set; } = "x64";
     [JsonPropertyName("unverified")] public bool Unverified { get; set; }   // unsigned-but-pinned (badge)
     [JsonPropertyName("needsReview")] public bool NeedsReview { get; set; }   // URL/signer not yet confirmed (warning)

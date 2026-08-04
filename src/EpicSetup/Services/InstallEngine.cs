@@ -120,21 +120,29 @@ public sealed class InstallEngine
                 }
 
                 Report(progress, app.Id, AppStatus.Installing, $"Installing {app.Name}...", completed, total);
-                int code = await Task.Run(() => _runner.Run(app, path, ct), ct);
+                var result = await _runner.RunAsync(app, path, ct);
 
                 completed++;
-                if (code == 0 || code == 3010)
+                if (result.TimedOut)
+                {
+                    _failed++;
+                    var mins = (app.InstallTimeoutSeconds ?? SilentInstaller.DefaultInstallTimeoutSeconds) / 60;
+                    Report(progress, app.Id, AppStatus.Failed,
+                        $"Installer did not finish within {mins} min and was terminated.", completed, total);
+                }
+                else if (result.ExitCode == 0 || result.ExitCode == 3010)
                 {
                     _succeeded++;
                     Report(progress, app.Id, AppStatus.Succeeded,
-                        code == 3010 ? "Installed - restart required" : "Installed",
+                        result.ExitCode == 3010 ? "Installed - restart required" : "Installed",
                         completed, total);
                 }
                 else
                 {
                     _failed++;
                     Report(progress, app.Id, AppStatus.Failed,
-                        $"Installer exited with code {code}.", completed, total);
+                        $"Installer exited with code {result.ExitCode} (0x{result.ExitCode & 0xFFFFFFFF:X8}).",
+                        completed, total);
                 }
             }
             catch (OperationCanceledException) { throw; }

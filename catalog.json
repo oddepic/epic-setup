@@ -27,9 +27,13 @@
               "description": "Privacy-first browser that blocks ads & trackers",
               "size": 90,
               "publisher": "Brave Software, Inc.",
-              "url": "https://laptop-updates.brave.com/latest/BraveBrowserSetup.exe",
+              "github": {
+                "repo": "brave/brave-browser",
+                "asset": "^BraveBrowserStandaloneSetup\\.exe$"
+              },
               "installerType": "Exe",
-              "silentArgs": "--silent",
+              "silentArgs": "/silent /install",
+              "closeApps": ["Brave"],
               "needsReview": true,
               "homepage": "https://brave.com/"
             },
@@ -80,6 +84,7 @@
               "url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64",
               "installerType": "Exe",
               "silentArgs": "--silent",
+              "closeApps": ["Discord"],
               "needsReview": true,
               "homepage": "https://discord.com/"
             },
@@ -115,6 +120,7 @@
               "url": "https://telegram.org/dl/desktop/win64",
               "installerType": "Nsis",
               "silentArgs": "/S",
+              "closeApps": ["Telegram"],
               "homepage": "https://telegram.org/"
             },
             {
@@ -143,6 +149,7 @@
               "github": { "repo": "obsproject/obs-studio", "asset": "OBS-Studio-.*-Windows-x64-Installer\\.exe" },
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "closeApps": ["obs64", "obs32"],
               "homepage": "https://obsproject.com/"
             },
             {
@@ -166,6 +173,7 @@
               "url": "https://download.scdn.co/SpotifySetup.exe",
               "installerType": "Exe",
               "silentArgs": "--silent",
+              "closeApps": ["Spotify"],
               "needsReview": true,
               "homepage": "https://www.spotify.com/"
             },
@@ -266,6 +274,7 @@
               "github": { "repo": "microsoft/PowerToys", "asset": "^PowerToysSetup-.*-x64\\.exe$" },
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "closeApps": ["PowerToys"],
               "homepage": "https://learn.microsoft.com/windows/powertoys/"
             },
             {
@@ -370,6 +379,7 @@
               "github": { "repo": "arduino/arduino-ide", "asset": "^arduino-ide_.*_Windows_64bit\\.exe$" },
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
+              "closeApps": ["Arduino IDE", "arduino"],
               "homepage": "https://www.arduino.cc/en/software"
             },
             {
@@ -422,7 +432,7 @@
               "name": "Java - Temurin JDK 25 LTS",
               "description": "Eclipse Temurin OpenJDK 25 LTS (pinned to 25.0.3+9 - refresh quarterly)",
               "size": 150,
-              "publisher": "Eclipse Foundation",
+              "publisher": "Eclipse.org Foundation, Inc.",
               "url": "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.3%2B9/OpenJDK25U-jdk_x64_windows_hotspot_25.0.3_9.msi",
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart ADDLOCAL=FeatureJavaHome,FeatureJarFileExtension,FeatureJavaOptions",
@@ -482,7 +492,7 @@
               "name": "Malwarebytes",
               "description": "Anti-malware protection (interactive online installer)",
               "size": 250,
-              "publisher": "Malwarebytes Inc.",
+              "publisher": "Malwarebytes Inc",
               "url": "https://downloads.malwarebytes.com/file/mb-windows",
               "installerType": "Exe",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
@@ -495,7 +505,7 @@
               "name": "Avast Free Antivirus",
               "description": "Free antivirus (online installer - silent flags unverified)",
               "size": 250,
-              "publisher": "AVAST Software s.r.o.",
+              "publisher": "Gen Digital Inc.",
               "url": "https://bits.avcdn.net/productfamily_ANTIVIRUS/insttype_FREE/platform_WIN/installertype_ONLINE/build_RELEASE/avast_free_antivirus_setup_online.exe",
               "installerType": "Exe",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
@@ -530,7 +540,7 @@
               "name": "Epic Games Launcher",
               "description": "Epic Games store & library",
               "size": 100,
-              "publisher": "Epic Games, Inc.",
+              "publisher": "Epic Games Inc.",
               "url": "https://launcher-public-service-prod-m.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi",
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart",

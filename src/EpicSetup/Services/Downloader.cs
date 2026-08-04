@@ -13,15 +13,46 @@ public readonly struct DownloadProgressInfo
 
 public sealed class Downloader
 {
+    private const int MaxAttempts = 3;
+    private const int RetryDelayMs = 2000;
+
     private readonly HttpClient _http;
     public Downloader() : this(Http.Client) { }
     public Downloader(HttpClient http) => _http = http;
 
+    /// <summary>
+    /// Downloads a URL to a file with retries on transient network failures.
+    /// Verifies the byte count matches Content-Length and deletes the partial
+    /// file on any failure, so a truncated or corrupted download never reaches
+    /// the signature verifier.
+    /// </summary>
     public async Task DownloadToFileAsync(Uri url, string destPath, IProgress<DownloadProgressInfo>? progress, CancellationToken ct)
     {
         var dir = Path.GetDirectoryName(destPath);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
+        Exception? last = null;
+        for (int attempt = 1; attempt <= MaxAttempts; attempt++)
+        {
+            if (attempt > 1) await Task.Delay(RetryDelayMs, ct);
+            try
+            {
+                await DownloadOnceAsync(url, destPath, progress, ct);
+                return;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex) when (ex is IOException or HttpRequestException)
+            {
+                last = ex;
+                TryDelete(destPath);
+            }
+        }
+        throw last ?? new IOException($"Failed to download {url}");
+    }
+
+    private async Task DownloadOnceAsync(Uri url, string destPath,
+        IProgress<DownloadProgressInfo>? progress, CancellationToken ct)
+    {
         using var resp = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
         resp.EnsureSuccessStatusCode();
 
@@ -44,6 +75,13 @@ public sealed class Downloader
 
         if (read == 0)
             throw new IOException($"Downloaded file is empty: {url}");
+        if (total >= 0 && read != total)
+            throw new IOException($"Download incomplete: got {read} of {total} bytes from {url}");
+    }
+
+    private static void TryDelete(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); } catch { }
     }
 
     public static string SafeFileNameFromUrl(Uri url)
