@@ -14,10 +14,8 @@ public partial class AppEntryVm : ObservableObject
     public string Id => Model.Id;
     public string Name => Model.Name;
     public string? Description => Model.Description;
-    public string? Publisher => Model.Publisher;
-    public bool Unverified => Model.Unverified;
     public bool NeedsReview => Model.NeedsReview;
-    public bool HasWarning => Model.NeedsReview || Model.Unverified;
+    public bool HasWarning => Model.NeedsReview;
 
     // Estimated full app size for the hover tooltip. Returns null when no size
     // is set, which means NO tooltip pops up - so the blank-popup bug can't recur.

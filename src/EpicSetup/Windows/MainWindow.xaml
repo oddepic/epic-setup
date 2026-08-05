@@ -35,10 +35,7 @@
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="&#xE9F5;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                               FontSize="18" Foreground="{StaticResource AccentBrush}"
-                               VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock Text="Epic Setup" Style="{StaticResource TitleText}" VerticalAlignment="Center"/>
+                    <TextBlock Text="epic setup" Style="{StaticResource TitleText}" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding CatalogSourceText}" Style="{StaticResource SmallMuted}"
                                VerticalAlignment="Center" Margin="12,3,0,0"/>
                 </StackPanel>
@@ -65,8 +62,8 @@
         <Grid Grid.Row="1" Margin="18,14,18,14">
             <!-- ===== Step 1: Select ===== -->
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                          Visibility="{Binding IsReviewing, Converter={StaticResource InvBoolVis}}"
-                          IsEnabled="{Binding SelectionEnabled}">
+                           Visibility="{Binding IsReviewing, Converter={StaticResource InvBoolVis}}"
+                           IsEnabled="{Binding SelectionEnabled}">
                 <ItemsControl ItemsSource="{Binding Categories}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -252,44 +249,58 @@
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>
+
         </Grid>
 
         <!-- ===================== Footer ===================== -->
-        <Border Grid.Row="2" Padding="20,12" Background="{StaticResource SurfaceBrush}"
+        <Border Grid.Row="2" Padding="20,2,20,4" Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="18"/>
+                </Grid.RowDefinitions>
+
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: status text, or download progress bar + percent while installing -->
-                <Grid Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource SmallMuted}"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding InstalledAppsTooltip}"
-                               Visibility="{Binding IsInstalling, Converter={StaticResource InvBoolVis}}"/>
-                    <Grid Visibility="{Binding IsInstalling, Converter={StaticResource BoolVis}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="50"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding DownloadPercentText}"
-                                   Style="{StaticResource TinyMonoText}"
-                                   TextAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                        <ProgressBar Grid.Column="1" Maximum="1" Value="{Binding DownloadProgress}"
-                                     VerticalAlignment="Center"/>
+                <!-- Top: current status and progress -->
+                <Grid Grid.Row="0" Grid.Column="0" MinHeight="40" VerticalAlignment="Top">
+
+                    <Grid MinHeight="40" VerticalAlignment="Top">
+                        <TextBlock Text="{Binding StatusText}" Style="{StaticResource SmallMuted}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding InstalledAppsTooltip}"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding IsInstalling, Converter={StaticResource InvBoolVis}}"/>
+                        <Grid Visibility="{Binding IsInstalling, Converter={StaticResource BoolVis}}"
+                              Margin="0,16,0,0" VerticalAlignment="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding DownloadPercentText}"
+                                       Style="{StaticResource TinyMonoText}"
+                                       TextAlignment="Left" Margin="0" VerticalAlignment="Top"/>
+                            <ProgressBar Grid.Column="1" Maximum="1" Value="{Binding DownloadProgress}"
+                                         Margin="8,4,0,0" VerticalAlignment="Top"/>
+                        </Grid>
                     </Grid>
+
                 </Grid>
 
-                <!-- Right: Select step Continue button -->
-                <Button Grid.Column="1" Style="{StaticResource PrimaryButton}"
+                <!-- Centered action button(s) -->
+                <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                        Style="{StaticResource PrimaryButton}"
                         Content="{Binding ContinueLabel}"
                         Command="{Binding ContinueCommand}"
+                        VerticalAlignment="Center"
                         Visibility="{Binding IsReviewing, Converter={StaticResource InvBoolVis}}"/>
 
-                <!-- Right: Review step Back + Install -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                            Orientation="Horizontal" VerticalAlignment="Center"
                             Visibility="{Binding IsReviewing, Converter={StaticResource BoolVis}}">
                     <Button Style="{StaticResource GhostButton}" Content="Back"
                             Command="{Binding BackCommand}" Margin="0,0,8,0"
@@ -297,6 +308,13 @@
                     <Button Style="{StaticResource PrimaryButton}" Content="Install all"
                             Command="{Binding InstallCommand}"/>
                 </StackPanel>
+
+                <!-- Bottom: one-line backend diagnostic -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding BackendLogText}"
+                           Style="{StaticResource TinyMonoText}"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center"/>
             </Grid>
         </Border>
 

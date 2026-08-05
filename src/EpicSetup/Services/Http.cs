@@ -14,7 +14,7 @@ internal static class Http
             MaxAutomaticRedirections = 10
         })
         {
-            Timeout = TimeSpan.FromSeconds(15)
+            Timeout = TimeSpan.FromMinutes(30)
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd("EpicSetup/1.0 (+https://github.com/epic-setup)");
         return client;

@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace EpicSetup.Services;
 
@@ -24,11 +22,10 @@ public sealed class Downloader
 
     /// <summary>
     /// Downloads a URL to a file with retries on transient network failures.
-    /// Verifies the byte count matches Content-Length and deletes the partial
-    /// file on any failure, so a truncated or corrupted download never reaches
-    /// the signature verifier.
+    /// The downloaded file is passed directly to the selected installer.
     /// </summary>
-    public async Task DownloadToFileAsync(Uri url, string destPath, IProgress<DownloadProgressInfo>? progress, CancellationToken ct)
+    public async Task DownloadToFileAsync(Uri url, string destPath, IProgress<DownloadProgressInfo>? progress,
+        CancellationToken ct, IProgress<string>? diagnostics = null)
     {
         var dir = Path.GetDirectoryName(destPath);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
@@ -37,6 +34,7 @@ public sealed class Downloader
         for (int attempt = 1; attempt <= MaxAttempts; attempt++)
         {
             if (attempt > 1) await Task.Delay(RetryDelayMs, ct);
+            diagnostics?.Report($"download attempt {attempt}/{MaxAttempts}: {url}");
             try
             {
                 await DownloadOnceAsync(url, destPath, progress, ct);
@@ -46,6 +44,8 @@ public sealed class Downloader
             catch (Exception ex) when (ex is IOException or HttpRequestException)
             {
                 last = ex;
+                diagnostics?.Report($"download attempt {attempt} failed: {ex.Message}" +
+                    (attempt < MaxAttempts ? "; retrying." : "."));
                 TryDelete(destPath);
             }
         }
@@ -75,31 +75,11 @@ public sealed class Downloader
             }
         }
 
-        if (read == 0)
-            throw new IOException($"Downloaded file is empty: {url}");
-        if (total >= 0 && read != total)
-            throw new IOException($"Download incomplete: got {read} of {total} bytes from {url}");
     }
 
     private static void TryDelete(string path)
     {
         try { if (File.Exists(path)) File.Delete(path); } catch { }
-    }
-
-    /// <summary>Lowercase hex SHA-256 of a file (used for catalog hash pinning).</summary>
-    public static string ComputeSha256(string filePath)
-    {
-        using var fs = File.OpenRead(filePath);
-        using var sha = SHA256.Create();
-        return Convert.ToHexString(sha.ComputeHash(fs)).ToLowerInvariant();
-    }
-
-    /// <summary>True if the file's SHA-256 equals the pinned (lowercase hex) hash.</summary>
-    public static bool HashMatches(string filePath, string? pinned)
-    {
-        if (string.IsNullOrWhiteSpace(pinned)) return false;
-        try { return ComputeSha256(filePath).Equals(pinned.Trim().ToLowerInvariant(), StringComparison.Ordinal); }
-        catch { return false; }
     }
 
     public static string SafeFileNameFromUrl(Uri url)

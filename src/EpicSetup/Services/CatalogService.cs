@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
@@ -32,13 +31,24 @@ public sealed class CatalogService
 
     public bool RemoteEnabled => true;
 
-    // Dev/test aid: set EPICSETUP_CATALOG_SOURCE=embedded (or EPICSETUP_EMBEDDED_CATALOG=1)
-    // to use the catalog shipped inside the exe instead of the remote repo.
-    public bool ForceEmbedded =>
-        string.Equals(Environment.GetEnvironmentVariable("EPICSETUP_CATALOG_SOURCE") ?? "",
-            "embedded", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(Environment.GetEnvironmentVariable("EPICSETUP_EMBEDDED_CATALOG") ?? "",
-            "1", StringComparison.OrdinalIgnoreCase);
+    /// <summary>
+    /// Forced-embedded mode skips remote and cache entirely and loads the
+    /// catalog baked into the executable. It is enabled by the --embedded
+    /// startup argument or by either embedded environment variable.
+    /// </summary>
+    public static bool IsEmbeddedForced()
+    {
+        foreach (var arg in Environment.GetCommandLineArgs())
+        {
+            if (string.Equals(arg, "--embedded", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return string.Equals(Environment.GetEnvironmentVariable("EPICSETUP_CATALOG_SOURCE") ?? "",
+                "embedded", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(Environment.GetEnvironmentVariable("EPICSETUP_EMBEDDED_CATALOG") ?? "",
+                "1", StringComparison.OrdinalIgnoreCase);
+    }
 
     public Uri RemoteUri => new($"https://raw.githubusercontent.com/{Owner}/{Repo}/{Branch}/catalog.json");
 
@@ -48,29 +58,13 @@ public sealed class CatalogService
 
     public (Catalog catalog, SourceKind source) LoadSync()
     {
-        if (RemoteEnabled && !ForceEmbedded)
-        {
-            try { return (LoadAsync().GetAwaiter().GetResult(), SourceKind.Remote); }
-            catch { /* fall through to cache/embedded */ }
-
-            try
-            {
-                if (File.Exists(CachePath))
-                {
-                    var cached = JsonSerializer.Deserialize<Catalog>(File.ReadAllText(CachePath), JsonOpts);
-                    if (cached != null && cached.Tabs.Count > 0) return (cached, SourceKind.Cache);
-                }
-            }
-            catch { }
-        }
-
-        return (LoadEmbedded(), SourceKind.Embedded);
+        return LoadAsync().GetAwaiter().GetResult();
     }
 
-    public async Task<Catalog> LoadAsync(CancellationToken ct = default)
+    public async Task<(Catalog catalog, SourceKind source)> LoadAsync(CancellationToken ct = default)
     {
-        if (!RemoteEnabled || ForceEmbedded)
-            return LoadEmbedded();
+        if (IsEmbeddedForced())
+            return (LoadEmbedded(), SourceKind.Embedded);
 
         try
         {
@@ -82,7 +76,7 @@ public sealed class CatalogService
                 if (catalog != null && catalog.Tabs.Count > 0)
                 {
                     await CacheAsync(catalog, ct);
-                    return catalog;
+                    return (catalog, SourceKind.Remote);
                 }
             }
         }
@@ -96,12 +90,12 @@ public sealed class CatalogService
             if (File.Exists(CachePath))
             {
                 var cached = await LoadFromFileAsync(CachePath, ct);
-                if (cached != null && cached.Tabs.Count > 0) return cached;
+                if (cached != null && cached.Tabs.Count > 0) return (cached, SourceKind.Cache);
             }
         }
         catch { }
 
-        return LoadEmbedded();
+        return (LoadEmbedded(), SourceKind.Embedded);
     }
 
     private async Task CacheAsync(Catalog catalog, CancellationToken ct)

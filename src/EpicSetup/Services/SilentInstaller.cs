@@ -16,7 +16,7 @@ namespace EpicSetup.Services;
 /// </summary>
 public sealed class SilentInstaller
 {
-    public const int DefaultInstallTimeoutSeconds = 600;
+    public const int DefaultInstallTimeoutSeconds = 180;
 
     public sealed class RunResult
     {
@@ -24,8 +24,13 @@ public sealed class SilentInstaller
         public bool TimedOut { get; init; }
     }
 
-    public async Task<RunResult> RunAsync(AppEntry app, string localPath, CancellationToken ct)
+    public async Task<RunResult> RunAsync(AppEntry app, string localPath, CancellationToken ct,
+        IProgress<string>? diagnostics = null)
     {
+        void Detail(string message) => diagnostics?.Report(message);
+
+        if (app.CloseApps.Count > 0)
+            Detail($"closeApps: terminating {string.Join(", ", app.CloseApps)} if running.");
         CloseRunning(app.CloseApps);
 
         var type = app.ParsedType;
@@ -37,55 +42,71 @@ public sealed class SilentInstaller
         }
 
         int timeout = app.InstallTimeoutSeconds ?? DefaultInstallTimeoutSeconds;
-        var log = InstallerLogPath(app);
+        Detail($"dispatch: type={type}, timeout={timeout}s.");
 
         switch (type)
         {
-            case AppInstallerType.Msi:
-                return await RunProcessAsync("msiexec.exe",
-                    $"/i \"{localPath}\" {app.SilentArgs?.Trim() ?? "/quiet /norestart INSTALLUSERCONTEXT=1"} /l*v \"{log}\"",
-                    Path.GetDirectoryName(localPath)!, timeout, ct);
-
-            case AppInstallerType.Inno:
-                return await RunProcessAsync(localPath,
-                    WithLogFlag(app.SilentArgs?.Trim().Length > 0
-                        ? app.SilentArgs
-                        : "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-", log, "/LOG=\"{0}\""),
-                    timeout, ct);
-
-            case AppInstallerType.Nsis:
-                return await RunProcessAsync(localPath,
-                    app.SilentArgs?.Trim().Length > 0 ? app.SilentArgs : "/S",
-                    timeout, ct);
-
-            case AppInstallerType.Burn:
-                return await RunProcessAsync(localPath,
-                    WithLogFlag(app.SilentArgs ?? "/quiet", log, "/l*v \"{0}\""), timeout, ct);
-
-            case AppInstallerType.Exe:
-                if (app.RunAsUser)
-                    return await RunUnelevatedAsync(localPath, app.SilentArgs ?? "", timeout, ct);
-                return await RunProcessAsync(localPath, app.SilentArgs ?? "", timeout, ct);
-
             case AppInstallerType.Portable:
+                Detail($"portable destination: {PortableRoot(app)}.");
                 return DeployPortable(app, localPath);
 
             case AppInstallerType.Zip:
+                Detail($"zip destination: {PortableRoot(app)}.");
                 return DeployZip(app, localPath);
 
             case AppInstallerType.Script:
+                Detail($"script command: {app.SilentArgs ?? string.Empty}");
                 return await RunScriptAsync(app.SilentArgs ?? "", timeout, ct);
 
             case AppInstallerType.WingetUpdate:
+                Detail("running hard-coded winget update command.");
                 return await RunScriptAsync(
                     "winget source update --disable-interactivity; " +
                     "winget upgrade --id Microsoft.AppInstaller -e --silent " +
                     "--accept-source-agreements --accept-package-agreements",
                     timeout, ct);
-
-            default:
-                return await RunProcessAsync(localPath, app.SilentArgs ?? "", timeout, ct);
         }
+
+        // Process-based installer: use the catalog's intended install scope.
+        var log = InstallerLogPath(app);
+        string exe; string args;
+        switch (type)
+        {
+            case AppInstallerType.Msi:
+                exe = "msiexec.exe";
+                args = $"/i \"{localPath}\" {app.SilentArgs?.Trim() ?? "/quiet /norestart"} /l*v \"{log}\"";
+                break;
+
+            case AppInstallerType.Inno:
+                exe = localPath;
+                args = WithLogFlag(app.SilentArgs?.Trim().Length > 0
+                    ? app.SilentArgs
+                    : "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-", log, "/LOG=\"{0}\"");
+                break;
+
+            case AppInstallerType.Nsis:
+                exe = localPath;
+                args = app.SilentArgs?.Trim().Length > 0 ? app.SilentArgs : "/S";
+                break;
+
+            case AppInstallerType.Burn:
+                exe = localPath;
+                args = WithLogFlag(app.SilentArgs ?? "/quiet", log, "/log \"{0}\"");
+                break;
+
+            default: // Exe (or Auto resolved to Exe-like)
+                exe = localPath;
+                args = app.SilentArgs ?? "";
+                break;
+        }
+
+        var scope = app.RunAsUser ? "interactive-user" : "elevated";
+        Detail($"launch: scope={scope}, executable=\"{exe}\", arguments={args}");
+        var result = app.RunAsUser
+            ? await RunAsInteractiveUserAsync(exe, args, timeout, ct)
+            : await RunElevatedAsync(exe, args, timeout, ct);
+        Detail($"process result: exitCode={result.ExitCode}, timedOut={result.TimedOut}.");
+        return result;
     }
 
     private static string InstallerLogPath(AppEntry app)
@@ -125,47 +146,6 @@ public sealed class SilentInstaller
             }
         }
     }
-
-    private static async Task<RunResult> RunProcessAsync(string fileName, string arguments,
-        string? workingDir, int timeoutSeconds, CancellationToken ct)
-    {
-        var psi = new ProcessStartInfo(fileName, arguments)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WindowStyle = ProcessWindowStyle.Hidden,
-            WorkingDirectory = workingDir ?? "",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-
-        using var p = new Process { StartInfo = psi };
-        p.Start();
-        // Drain output so the child never blocks on a full pipe.
-        var outTask = p.StandardOutput.ReadToEndAsync(ct);
-        var errTask = p.StandardError.ReadToEndAsync(ct);
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
-        try
-        {
-            await p.WaitForExitAsync(timeoutCts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            KillTree(p);
-            try { await outTask; } catch { }
-            try { await errTask; } catch { }
-            if (ct.IsCancellationRequested) throw; // user cancelled: propagate
-            return new RunResult { ExitCode = -1, TimedOut = true };
-        }
-        try { await outTask; } catch { }
-        try { await errTask; } catch { }
-        return new RunResult { ExitCode = p.ExitCode };
-    }
-
-    private static Task<RunResult> RunProcessAsync(string fileName, string arguments,
-        int timeoutSeconds, CancellationToken ct) =>
-        RunProcessAsync(fileName, arguments, null, timeoutSeconds, ct);
 
     private static async Task<RunResult> RunScriptAsync(string command, int timeoutSeconds, CancellationToken ct)
     {
@@ -207,17 +187,34 @@ public sealed class SilentInstaller
         try { p.WaitForExit(3000); } catch { }
     }
 
-    /// <summary>
-    /// Runs an installer with a medium-integrity, privilege-restricted token so
-    /// per-user Squirrel installers (Spotify) don't refuse to run as admin.
-    /// </summary>
-    private static async Task<RunResult> RunUnelevatedAsync(string fileName, string arguments,
+    private static async Task<RunResult> RunElevatedAsync(string fileName, string arguments,
         int timeoutSeconds, CancellationToken ct)
     {
-        var p = StartUnelevated(fileName, arguments ?? "");
+        var psi = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = arguments ?? string.Empty,
+            WorkingDirectory = Path.GetDirectoryName(fileName) ?? Environment.CurrentDirectory,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WindowStyle = ProcessWindowStyle.Hidden
+        };
+        using var p = Process.Start(psi)
+            ?? throw new InvalidOperationException($"Could not start installer '{fileName}'.");
+        return await WaitForExitAsync(p, timeoutSeconds, ct);
+    }
+
+    private static async Task<RunResult> RunAsInteractiveUserAsync(string fileName, string arguments,
+        int timeoutSeconds, CancellationToken ct)
+    {
+        var p = StartAsInteractiveUser(fileName, arguments ?? string.Empty);
         if (p is null)
             return new RunResult { ExitCode = -1 };
+        return await WaitForExitAsync(p, timeoutSeconds, ct);
+    }
 
+    private static async Task<RunResult> WaitForExitAsync(Process p, int timeoutSeconds, CancellationToken ct)
+    {
         using (p)
         using (var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
         {
@@ -236,98 +233,90 @@ public sealed class SilentInstaller
         }
     }
 
-    private static Process? StartUnelevated(string fileName, string arguments)
+    /// <summary>
+    /// Gets the medium-integrity token from the user's Explorer process. The
+    /// application itself is elevated, so duplicating its own token does not
+    /// produce a real per-user process.
+    /// </summary>
+    private static Process? StartAsInteractiveUser(string fileName, string arguments)
     {
-        if (!OpenProcessToken(GetCurrentProcess(), TokenDuplicate | TokenAssignPrimary | TokenQuery, out var hToken))
-            return null;
-        try
+        int sessionId = Process.GetCurrentProcess().SessionId;
+        foreach (var shell in Process.GetProcessesByName("explorer"))
         {
-            if (!DuplicateTokenEx(hToken, TokenAllAccess, IntPtr.Zero, SecurityImpersonation, TokenPrimary, out var hDup))
-                return null;
-            try
+            using (shell)
             {
-                if (!CreateRestrictedToken(hDup, DisableMaxPrivilege, 0, null, 0, null, 0, null, out var hRestricted))
-                    return null;
                 try
                 {
-                    if (!ConvertStringSidToSid("S-1-16-8192", out var pMediumSid)) // Medium integrity
-                        return null;
+                    if (shell.SessionId != sessionId) continue;
+
+                    var hProcess = OpenProcess(ProcessQueryLimitedInformation, false, shell.Id);
+                    if (hProcess == IntPtr.Zero) continue;
                     try
                     {
-                        var label = new TOKEN_MANDATORY_LABEL
-                        {
-                            Label = new SID_AND_ATTRIBUTES { Sid = pMediumSid, Attributes = SeGroupIntegrity }
-                        };
-                        int size = Marshal.SizeOf<TOKEN_MANDATORY_LABEL>();
-                        IntPtr pLabel = Marshal.AllocHGlobal(size);
+                        if (!OpenProcessToken(hProcess, TokenDuplicate | TokenQuery, out var hToken))
+                            continue;
                         try
                         {
-                            Marshal.StructureToPtr(label, pLabel, false);
-                            if (!SetTokenInformation(hRestricted, TokenIntegrityLevel, pLabel, size))
-                                return null;
+                            if (!DuplicateTokenEx(hToken, TokenProcessCreation, IntPtr.Zero,
+                                    SecurityImpersonation, TokenPrimary, out var hUserToken))
+                                continue;
+                            try
+                            {
+                                var startup = new STARTUPINFOW
+                                {
+                                    cb = Marshal.SizeOf<STARTUPINFOW>(),
+                                    lpDesktop = "winsta0\\default",
+                                    dwFlags = StartfUseShowWindow,
+                                    wShowWindow = 0
+                                };
+                                var command = new System.Text.StringBuilder(
+                                    $"\"{fileName}\" {arguments}".Trim());
+                                var currentDirectory = Path.GetDirectoryName(fileName);
+                                if (!CreateProcessWithTokenW(hUserToken, LogonWithProfile, fileName,
+                                        command, CreateNoWindow | CreateUnicodeEnvironment, IntPtr.Zero,
+                                        currentDirectory, ref startup, out var processInfo))
+                                    continue;
+                                try
+                                {
+                                    return Process.GetProcessById(processInfo.dwProcessId);
+                                }
+                                finally
+                                {
+                                    CloseHandle(processInfo.hProcess);
+                                    CloseHandle(processInfo.hThread);
+                                }
+                            }
+                            finally { CloseHandle(hUserToken); }
                         }
-                        finally { Marshal.FreeHGlobal(pLabel); }
-
-                        var si = new STARTUPINFOW
-                        {
-                            cb = Marshal.SizeOf<STARTUPINFOW>(),
-                            dwFlags = StartfUseShowWindow,
-                            wShowWindow = 0 // SW_HIDE
-                        };
-                        var cmd = new System.Text.StringBuilder($"\"{fileName}\" {arguments}".Trim());
-                        if (!CreateProcessWithTokenW(hRestricted, LogonWithProfile, null, cmd,
-                                CreateNoWindow, IntPtr.Zero, null, ref si, out var pi))
-                            return null;
-                        try
-                        {
-                            var proc = Process.GetProcessById(pi.dwProcessId);
-                            CloseHandle(pi.hProcess);
-                            CloseHandle(pi.hThread);
-                            return proc;
-                        }
-                        catch
-                        {
-                            CloseHandle(pi.hProcess);
-                            CloseHandle(pi.hThread);
-                            return null;
-                        }
+                        finally { CloseHandle(hToken); }
                     }
-                    finally { FreeSid(pMediumSid); }
+                    finally { CloseHandle(hProcess); }
                 }
-                finally { CloseHandle(hRestricted); }
+                catch
+                {
+                    // The shell can exit while its token is being opened.
+                }
             }
-            finally { CloseHandle(hDup); }
         }
-        finally { CloseHandle(hToken); }
+        return null;
     }
 
-    #region De-elevation P/Invoke
+    #region Process token P/Invoke
 
+    private const uint ProcessQueryLimitedInformation = 0x1000;
     private const uint TokenQuery = 0x0008;
     private const uint TokenDuplicate = 0x0002;
     private const uint TokenAssignPrimary = 0x0001;
-    private const uint TokenAllAccess = 0x000F01FF;
-    private const uint DisableMaxPrivilege = 0x1;
+    private const uint TokenAdjustDefault = 0x0080;
+    private const uint TokenAdjustSessionId = 0x0100;
+    private const uint TokenProcessCreation = TokenAssignPrimary | TokenDuplicate | TokenQuery |
+                                               TokenAdjustDefault | TokenAdjustSessionId;
     private const int SecurityImpersonation = 2;
     private const int TokenPrimary = 1;
-    private const int TokenIntegrityLevel = 25;
-    private const uint SeGroupIntegrity = 0x00000020;
     private const uint CreateNoWindow = 0x08000000;
+    private const uint CreateUnicodeEnvironment = 0x00000400;
     private const uint LogonWithProfile = 0x00000001;
     private const uint StartfUseShowWindow = 0x00000001;
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct SID_AND_ATTRIBUTES
-    {
-        public IntPtr Sid;
-        public uint Attributes;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct TOKEN_MANDATORY_LABEL
-    {
-        public SID_AND_ATTRIBUTES Label;
-    }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct STARTUPINFOW
@@ -361,27 +350,15 @@ public sealed class SilentInstaller
         public int dwThreadId;
     }
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint desiredAccess, bool inheritHandle, int processId);
+
     [DllImport("advapi32.dll", SetLastError = true)]
     private static extern bool OpenProcessToken(IntPtr processHandle, uint desiredAccess, out IntPtr tokenHandle);
 
     [DllImport("advapi32.dll", SetLastError = true)]
     private static extern bool DuplicateTokenEx(IntPtr hExistingToken, uint dwDesiredAccess,
         IntPtr lpTokenAttributes, int impersonationLevel, int tokenType, out IntPtr phNewToken);
-
-    [DllImport("advapi32.dll", SetLastError = true)]
-    private static extern bool CreateRestrictedToken(IntPtr existingToken, uint flags,
-        uint disallowSidCount, IntPtr[]? sidsToDisallow, uint restrictSidCount, IntPtr[]? sidsToRestrict,
-        uint privilegesCount, IntPtr[]? privilegesToDelete, out IntPtr newToken);
-
-    [DllImport("advapi32.dll", SetLastError = true)]
-    private static extern bool SetTokenInformation(IntPtr tokenHandle, int tokenInformationClass,
-        IntPtr tokenInformation, int tokenInformationLength);
-
-    [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern bool ConvertStringSidToSid(string stringSid, out IntPtr sid);
-
-    [DllImport("advapi32.dll")]
-    private static extern IntPtr FreeSid(IntPtr sid);
 
     [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern bool CreateProcessWithTokenW(IntPtr hToken, uint dwLogonFlags,
@@ -392,15 +369,11 @@ public sealed class SilentInstaller
     [DllImport("kernel32.dll")]
     private static extern bool CloseHandle(IntPtr hObject);
 
-    [DllImport("kernel32.dll")]
-    private static extern IntPtr GetCurrentProcess();
-
     #endregion
 
     private static RunResult DeployPortable(AppEntry app, string localPath)
     {
-        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Programs", app.PortableSubdir ?? app.Id);
+        var root = PortableRoot(app);
         Directory.CreateDirectory(root);
         var dest = Path.Combine(root, Path.GetFileName(localPath));
         File.Copy(localPath, dest, true);
@@ -410,8 +383,7 @@ public sealed class SilentInstaller
     /// <summary>Extracts a .zip archive to %LOCALAPPDATA%\Programs\{portableSubdir}.</summary>
     private static RunResult DeployZip(AppEntry app, string localPath)
     {
-        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Programs", app.PortableSubdir ?? app.Id);
+        var root = PortableRoot(app);
         Directory.CreateDirectory(root);
 
         var fullRoot = Path.GetFullPath(root);
@@ -432,4 +404,8 @@ public sealed class SilentInstaller
         }
         return new RunResult { ExitCode = 0 };
     }
+
+    private static string PortableRoot(AppEntry app)
+        => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Programs", app.PortableSubdir ?? app.Id);
 }

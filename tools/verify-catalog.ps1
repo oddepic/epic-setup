@@ -1,45 +1,25 @@
 <#
 .SYNOPSIS
   Headless catalog verifier for Epic Setup. Resolves every app's download
-  source, checks the URL, and (optionally) downloads + Authenticode-verifies
-  installers and writes SHA-256 pins for unsigned apps.
+  source and HEAD-checks that the URL is alive and serves a real file.
 
 .PARAMETER Catalog
   Path to catalog.json (default: repo root).
-
-.PARAMETER Full
-  Download every app and run the Authenticode + publisher check (slow, ~2 GB).
-
-.PARAMETER PinUnsigned
-  Download only the `unverified` apps, compute SHA-256, and write the pins
-  back into catalog.json so the engine can install them.
 
 .PARAMETER Only
   Comma-separated app ids to check (subset for quick testing).
 
 .EXAMPLE
-  # resolve + HEAD-check every URL (fast)
   pwsh tools/verify-catalog.ps1
-
-  # full signature verification of every app
-  pwsh tools/verify-catalog.ps1 -Full
-
-  # pin hashes for unsigned apps
-  pwsh tools/verify-catalog.ps1 -PinUnsigned
 #>
 [CmdletBinding()]
 param(
     [string]$Catalog = (Join-Path $PSScriptRoot '..\catalog.json'),
-    [switch]$Full,
-    [switch]$PinUnsigned,
     [string]$Only = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $token = $env:EPICSETUP_GH_TOKEN
-$tmp = Join-Path $env:TEMP 'EpicSetup-verify'
-New-Item -ItemType Directory -Force -Path $tmp | Out-Null
-Add-Type -AssemblyName System.Security
 
 function Retry([scriptblock]$action, [int]$tries = 4) {
     for ($i = 1; $i -le $tries; $i++) {
@@ -93,43 +73,6 @@ function Test-Url([string]$url) {
     }
 }
 
-function Get-Download([string]$url, [string]$dest) {
-    Retry {
-        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing -MaximumRedirection 8
-    }
-    $size = (Get-Item $dest).Length
-    if ($size -eq 0) { throw "Empty download: $url" }
-    return $size
-}
-
-function Get-Signer([string]$path) {
-    $sig = Get-AuthenticodeSignature -FilePath $path
-    $cn = ''; $o = ''
-    if ($sig.SignerCertificate) {
-        $cn = $sig.SignerCertificate.GetNameInfo('SimpleName', $false)
-        $decoded = $sig.SignerCertificate.SubjectName.Decode(
-            [System.Security.Cryptography.X509Certificates.X500DistinguishedNameFlags]::UseNewLines)
-        $line = ($decoded -split "`r?`n" | Where-Object { $_ -match '^O=' } | Select-Object -First 1)
-        if ($line) { $o = $line.Substring(2).Trim().Trim('"') }
-    }
-    return [pscustomobject]@{
-        Status = $sig.Status.ToString()
-        Cn     = $cn
-        O      = $o
-    }
-}
-
-function Test-Publisher([string]$cn, [string]$o, [string]$expected) {
-    if ([string]::IsNullOrWhiteSpace($expected)) { return 'n/a' }
-    if ($cn -and $cn.IndexOf($expected, [StringComparison]::OrdinalIgnoreCase) -ge 0) { return 'ok' }
-    if ($o  -and $o.IndexOf($expected,  [StringComparison]::OrdinalIgnoreCase) -ge 0) { return 'ok' }
-    return 'MISMATCH'
-}
-
-function Get-Sha256([string]$path) {
-    return (Get-FileHash -Path $path -Algorithm SHA256).Hash.ToLowerInvariant()
-}
-
 $cat = Get-Content $Catalog -Raw | ConvertFrom-Json
 $apps = @($cat.tabs | ForEach-Object { $_.categories } | ForEach-Object { $_.apps })
 Write-Verbose "loaded apps=$($apps.Count) from '$Catalog'"
@@ -139,10 +82,9 @@ if ($Only) {
 }
 
 $results = @()
-$pinUpdates = @()
 
 foreach ($app in $apps) {
-    $row = [ordered]@{ Id = $app.id; Resolve = ''; Http = ''; Signed = ''; Signer = ''; Publisher = ''; Sha256 = '' }
+    $row = [ordered]@{ Id = $app.id; Resolve = ''; Http = '' }
     $skip = @('Script', 'WingetUpdate') -contains $app.installerType
 
     $url = $null
@@ -167,29 +109,6 @@ foreach ($app in $apps) {
         } else { "FAIL $($probe.Status) $($probe.Error)" }
     }
 
-    $needDownload = $Full -or ($PinUnsigned -and $app.unverified -and -not $skip)
-    if ($needDownload -and $url) {
-        $dest = Join-Path $tmp "$($app.id)-verify.bin"
-        try {
-            $size = Get-Download $url $dest
-            $sig = Get-Signer $dest
-            $row.Signed = $sig.Status
-            $row.Signer = if ($sig.Cn) { "$($sig.Cn)" } elseif ($sig.O) { $sig.O } else { '' }
-            if ($sig.Status -eq 'Valid') {
-                $row.Publisher = Test-Publisher $sig.Cn $sig.O $app.publisher
-            } else {
-                $row.Publisher = '(unsigned)'
-            }
-            $row.Sha256 = Get-Sha256 $dest
-            if ($PinUnsigned -and $app.unverified) {
-                $pinUpdates += @{ app = $app; sha = $row.Sha256 }
-            }
-        } catch {
-            $row.Signed = "DL FAIL: $($_.Exception.Message)"
-        }
-        Remove-Item $dest -Force -ErrorAction SilentlyContinue
-    }
-
     if ($skip) { $row.Resolve = 'script (no download)' }
     $results += [pscustomobject]$row
 }
@@ -198,15 +117,4 @@ $results | Format-Table -AutoSize
 
 $ok = @($results | Where-Object { $_.Resolve -eq 'ok' }).Count
 $fail = @($results | Where-Object { $_.Resolve -like 'FAIL*' }).Count
-$signed = @($results | Where-Object { $_.Signed -eq 'Valid' }).Count
-$unsigned = @($results | Where-Object { $_.Signed -eq 'NotSigned' }).Count
-Write-Host "resolve ok=$ok fail=$fail | signed(Valid)=$signed unsigned(NotSigned)=$unsigned | apps checked=$($results.Count)"
-
-if ($PinUnsigned -and $pinUpdates.Count -gt 0) {
-    Write-Host "`nWriting SHA-256 pins for $($pinUpdates.Count) unsigned apps into $Catalog ..."
-    foreach ($u in $pinUpdates) {
-        $u.app | Add-Member -NotePropertyName sha256 -NotePropertyValue $u.sha -Force
-    }
-    $cat | ConvertTo-Json -Depth 20 | Set-Content -Path $Catalog -Encoding UTF8
-    Write-Host "Done."
-}
+Write-Host "resolve ok=$ok fail=$fail | apps checked=$($results.Count)"

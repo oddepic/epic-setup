@@ -1,60 +1,79 @@
 # Epic Setup
 
-Minimal, Ninite-style Windows app installer. Single self-contained `.exe` — admin-elevated, silent installs, Authenticode signature verified.
+Epic Setup is a compact, Ninite-style Windows app installer. It presents a
+catalog of curated applications, lets users select and review them, then
+downloads and runs their installers with installer-specific silent switches.
+It has no telemetry, advertising, or winget dependency.
 
-## Download
+The current application targets Windows 10/11 x64 and is distributed as a
+self-contained single-file executable. The main UI requests administrator
+access through UAC.
 
-Grab `EpicSetup.exe` from the latest [GitHub Release](https://github.com/epic-setup/epic-setup/releases). Runs on Windows 10/11 x64 with zero prerequisites (~59 MB). Expect one SmartScreen warning (unsigned exe) + one UAC prompt.
+## Project Structure
 
-## Catalog (48 apps)
+```text
+catalog.json                 # App catalog and installer metadata
+src/EpicSetup/
+  Models/                    # Catalog and domain models
+  Services/                  # Catalog, download, release, icon, and install services
+  ViewModels/                # MVVM application state
+  Windows/                   # Main WPF window
+  Controls/                  # Custom layout controls
+  Themes/                   # Dark-theme XAML styles
+  Assets/Icons/             # Bundled application icons
+  Fonts/                   # Bundled JetBrains Mono fonts
+tools/
+  fetch-icons.ps1            # Icon download and normalization tool
+  verify-catalog.ps1         # Catalog source and URL checks
+  run-embedded.cmd           # Launches the executable with embedded catalog data
+```
 
-**Apps** (6 categories) — Browsers · Communication · Media · Utilities · Development · Productivity & Security
+## Built With
 
-**Games** (3 categories) — Launchers · Games · Gaming Tools
+- **C# 13** for application and service code
+- **.NET 10** with `net10.0-windows`
+- **WPF** and **XAML** for the desktop interface
+- **CommunityToolkit.Mvvm 8.4.0** for MVVM support; the only NuGet dependency
+- **PowerShell 7** for build-time tooling and catalog checks
+- **JSON** for the application catalog and **MSBuild/XML** for project configuration
+- **PNG** icons and bundled **JetBrains Mono** fonts
+- **GitHub Actions** for release builds on `v*` tags
 
-Edit [`catalog.json`](./catalog.json) to add apps. 13 entries resolve via GitHub latest releases; the rest use pinned evergreen URLs.
+## Catalog
+
+The catalog currently contains 48 apps organized into Apps and Games tabs.
+Edit [`catalog.json`](./catalog.json) to add or update entries. Apps can use a
+static vendor URL or a GitHub release asset, and support installer types such
+as MSI, NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, and script-based
+installers.
+
+At startup, the application loads the catalog from the remote GitHub copy,
+then falls back to a local cache and finally to the catalog embedded in the
+executable. The source can be overridden with `EPICSETUP_CATALOG_OWNER`,
+`EPICSETUP_CATALOG_REPO`, `EPICSETUP_CATALOG_BRANCH`, or
+`EPICSETUP_CATALOG_SOURCE=embedded`.
 
 ## Build
 
-.NET 10 SDK required (user-local install):
+Install the .NET 10 SDK, then run:
 
 ```pwsh
-& ([scriptblock]::Create((iwr -UseBasicParsing https://dot.net/v1/dotnet-install.ps1).Content)) -Channel '10.0' -InstallDir "$env:LOCALAPPDATA\Microsoft\DotNet"
+dotnet build src/EpicSetup/EpicSetup.csproj -c Debug -p:Platform=x64
+
 dotnet publish src/EpicSetup/EpicSetup.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:SatelliteResourceLanguages=en -o dist
 ```
 
-Git tag → GitHub Actions builds and attaches the exe to the Release.
+Use `tools\run-embedded.cmd` to test the catalog compiled into the executable.
+GitHub Actions builds and attaches the executable to releases created from
+`v*` tags.
 
-## Live catalog
+## Current Security Status
 
-The app fetches `catalog.json` from `https://raw.githubusercontent.com/oddepic/epic-setup/main/catalog.json` at startup, so you can update apps (add/edit catalog entries) by pushing to your repo — no new release needed. If the remote fetch fails (offline, repo not yet created), it falls back to the embedded catalog baked into the exe. Override the source with env vars:
+The previous Authenticode, publisher, and SHA-256 verification layer was
+removed as part of an ongoing security redesign. The current engine downloads
+and runs installers without an install-time security gate, and the remote
+catalog is not authenticated or integrity-pinned. This build must not be
+treated as the final secure distribution model.
 
-```pwsh
-setx EPICSETUP_CATALOG_OWNER oddepic
-setx EPICSETUP_CATALOG_REPO   epic-setup
-setx EPICSETUP_CATALOG_BRANCH main
-```
-
-(These are already the defaults — only set them if you fork the repo to a different location.)
-
-## Safety
-
-1. Download over HTTPS to `%TEMP%`
-2. `WinVerifyTrust` Authenticode check (unsigned/expired/revoked/tampered → blocked)
-3. Publisher subject matched against the pinned signer
-4. Silent install via per-type switches (NSIS `/S`, Inno `/VERYSILENT`, MSI `/quiet`)
-5. Downloaded file deleted (except portables)
-
-## Built with
-
-**C# 13 / .NET 10** — WPF, `PublishSingleFile`, self-contained single exe.
-
-**CommunityToolkit.Mvvm 8.4.0** — the only NuGet dependency. Everything else is BCL, WPF, and `wintrust.dll` P/Invoke.
-
-**31 bundled app icons** (64 px PNGs from dashboard-icons) + Clearbit/favicon fallback chain.
-
-**JetBrains Mono** bundled as WPF resource.
-
-**GitHub Actions** for release builds on `v*` tags.
-
-**Custom `MasonryPanel`** for balanced multi-column category layout.
+The executable is currently unsigned, so Windows SmartScreen may show a
+warning on first launch.
