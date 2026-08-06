@@ -58,7 +58,13 @@ public sealed class InstallEngine
             if (app.NeedsReview)
                 ReportDiagnostic(progress, $"{app.Id}: catalog review marker ignored; no verification is performed.", completed, total);
             if (app.NeedsUserSetup)
-                ReportDiagnostic(progress, $"{app.Id}: legacy manual-setup marker ignored; automatic attempt continues.", completed, total);
+            {
+                completed++;
+                ReportDiagnostic(progress,
+                    $"{app.Id}: manual setup required; skipped automatic install (interactive installer).", completed, total);
+                Report(progress, app.Id, AppStatus.Skipped, "Manual setup required", completed, total);
+                continue;
+            }
 
             // Script / WingetUpdate run inline without a download.
             if (type == AppInstallerType.Script || type == AppInstallerType.WingetUpdate)
@@ -138,6 +144,22 @@ public sealed class InstallEngine
                     $"{app.Id}: dispatching {type} installer from {path}.");
                 var runnerDiagnostics = new Progress<string>(detail =>
                     ReportDiagnostic(progress, $"{app.Id}: {detail}", completed, total));
+                if (app.NeedsUserSetup)
+                {
+                    // Manual-setup apps: download + launch the installer for the
+                    // user to complete interactively, then continue the batch
+                    // without waiting or killing it.
+                    completed++;
+                    var launchResult = await _runner.RunAsync(app, path, ct, runnerDiagnostics, launchOnly: true);
+                    if (launchResult.ExitCode == 0)
+                        Report(progress, app.Id, AppStatus.Skipped, "Launched", completed, total);
+                    else
+                    {
+                        _failed++;
+                        Report(progress, app.Id, AppStatus.Failed, "Could not launch installer", completed, total);
+                    }
+                    continue;
+                }
                 var result = await _runner.RunAsync(app, path, ct, runnerDiagnostics);
                 ReportInstallResult(progress, app, result, ref completed, total);
             }
@@ -150,8 +172,11 @@ public sealed class InstallEngine
             }
             finally
             {
-                SafeDelete(path);
-                ReportDiagnostic(progress, $"{app.Id}: temporary download cleanup requested for {path}.", completed, total);
+                if (!app.NeedsUserSetup)
+                {
+                    SafeDelete(path);
+                    ReportDiagnostic(progress, $"{app.Id}: temporary download cleanup requested for {path}.", completed, total);
+                }
             }
         }
 

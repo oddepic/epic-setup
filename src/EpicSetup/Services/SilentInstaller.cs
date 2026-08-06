@@ -25,7 +25,7 @@ public sealed class SilentInstaller
     }
 
     public async Task<RunResult> RunAsync(AppEntry app, string localPath, CancellationToken ct,
-        IProgress<string>? diagnostics = null)
+        IProgress<string>? diagnostics = null, bool launchOnly = false)
     {
         void Detail(string message) => diagnostics?.Report(message);
 
@@ -102,6 +102,19 @@ public sealed class SilentInstaller
 
         var scope = app.RunAsUser ? "interactive-user" : "elevated";
         Detail($"launch: scope={scope}, executable=\"{exe}\", arguments={args}");
+        if (launchOnly)
+        {
+            // Launch the interactive installer without waiting: the user completes
+            // setup by hand, and the batch continues to the next app. The temp
+            // download is left in place while the installer runs.
+            var started = app.RunAsUser
+                ? StartAsInteractiveUser(exe, args) is not null
+                : StartProcess(exe, args) is not null;
+            Detail(started
+                ? "launch-only: installer started; not waiting (manual setup)."
+                : "launch-only: FAILED to start installer process.");
+            return new RunResult { ExitCode = started ? 0 : -1, TimedOut = false };
+        }
         var result = app.RunAsUser
             ? await RunAsInteractiveUserAsync(exe, args, timeout, ct)
             : await RunElevatedAsync(exe, args, timeout, ct);
@@ -190,6 +203,13 @@ public sealed class SilentInstaller
     private static async Task<RunResult> RunElevatedAsync(string fileName, string arguments,
         int timeoutSeconds, CancellationToken ct)
     {
+        var p = StartProcess(fileName, arguments)
+            ?? throw new InvalidOperationException($"Could not start installer '{fileName}'.");
+        return await WaitForExitAsync(p, timeoutSeconds, ct);
+    }
+
+    private static Process? StartProcess(string fileName, string arguments)
+    {
         var psi = new ProcessStartInfo
         {
             FileName = fileName,
@@ -199,9 +219,7 @@ public sealed class SilentInstaller
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden
         };
-        using var p = Process.Start(psi)
-            ?? throw new InvalidOperationException($"Could not start installer '{fileName}'.");
-        return await WaitForExitAsync(p, timeoutSeconds, ct);
+        return Process.Start(psi);
     }
 
     private static async Task<RunResult> RunAsInteractiveUserAsync(string fileName, string arguments,
