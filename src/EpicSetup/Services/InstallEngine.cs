@@ -57,14 +57,6 @@ public sealed class InstallEngine
             ReportDiagnostic(progress, $"{app.Id}: preparing {app.Name} ({type}).", completed, total);
             if (app.NeedsReview)
                 ReportDiagnostic(progress, $"{app.Id}: catalog review marker ignored; no verification is performed.", completed, total);
-            if (app.NeedsUserSetup)
-            {
-                completed++;
-                ReportDiagnostic(progress,
-                    $"{app.Id}: manual setup required; skipped automatic install (interactive installer).", completed, total);
-                Report(progress, app.Id, AppStatus.Skipped, "Manual setup required", completed, total);
-                continue;
-            }
 
             // Script / WingetUpdate run inline without a download.
             if (type == AppInstallerType.Script || type == AppInstallerType.WingetUpdate)
