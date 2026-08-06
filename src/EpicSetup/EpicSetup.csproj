@@ -11,7 +11,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>EpicSetup</AssemblyName>
     <RootNamespace>EpicSetup</RootNamespace>
-    <Version>1.0.10-test</Version>
+    <Version>1.0.14-test</Version>
     <Company>Epic Setup</Company>
     <Product>Epic Setup</Product>
     <Copyright>Open source contributors</Copyright>
