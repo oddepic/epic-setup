@@ -144,7 +144,10 @@ public sealed class InstallEngine
                     completed++;
                     var launchResult = await _runner.RunAsync(app, path, ct, runnerDiagnostics, launchOnly: true);
                     if (launchResult.ExitCode == 0)
+                    {
+                        _succeeded++;
                         Report(progress, app.Id, AppStatus.Skipped, "Launched", completed, total);
+                    }
                     else
                     {
                         _failed++;

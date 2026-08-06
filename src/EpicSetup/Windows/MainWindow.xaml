@@ -225,30 +225,33 @@
                                         </TextBlock>
 
                                         <!-- Status dot (right) -->
-                                        <Ellipse Grid.Column="4" VerticalAlignment="Center" Margin="0,0,4,0">
-                                            <Ellipse.Style>
-                                                <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDot}">
-                                                    <Setter Property="Fill" Value="{StaticResource TextMutedBrush}"/>
+                                        <Border Grid.Column="4" VerticalAlignment="Center" Margin="0,0,4,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border" BasedOn="{StaticResource StatusDot}">
+                                                    <Setter Property="Background" Value="{StaticResource TextMutedBrush}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Succeeded}">
-                                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                                            <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Failed}">
-                                                            <Setter Property="Fill" Value="{StaticResource ErrorBrush}"/>
+                                                            <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Downloading}">
-                                                            <Setter Property="Fill" Value="{StaticResource InfoBrush}"/>
+                                                            <Setter Property="Background" Value="{StaticResource InfoBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Verifying}">
-                                                            <Setter Property="Fill" Value="{StaticResource InfoBrush}"/>
+                                                            <Setter Property="Background" Value="{StaticResource InfoBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Installing}">
-                                                            <Setter Property="Fill" Value="{StaticResource InfoBrush}"/>
+                                                            <Setter Property="Background" Value="{StaticResource InfoBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static md:AppStatus.Skipped}">
+                                                            <Setter Property="Background" Value="{StaticResource WarnBrush}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </Ellipse.Style>
-                                        </Ellipse>
+                                            </Border.Style>
+                                        </Border>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

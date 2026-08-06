@@ -17,6 +17,7 @@ namespace EpicSetup.Services;
 public sealed class SilentInstaller
 {
     public const int DefaultInstallTimeoutSeconds = 180;
+    public const int LaunchProbeSeconds = 10;
 
     public sealed class RunResult
     {
@@ -104,16 +105,33 @@ public sealed class SilentInstaller
         Detail($"launch: scope={scope}, executable=\"{exe}\", arguments={args}");
         if (launchOnly)
         {
-            // Launch the interactive installer without waiting: the user completes
-            // setup by hand, and the batch continues to the next app. The temp
-            // download is left in place while the installer runs.
-            var started = app.RunAsUser
-                ? StartAsInteractiveUser(exe, args) is not null
-                : StartProcess(exe, args) is not null;
-            Detail(started
-                ? "launch-only: installer started; not waiting (manual setup)."
-                : "launch-only: FAILED to start installer process.");
-            return new RunResult { ExitCode = started ? 0 : -1, TimedOut = false };
+            // Launch the interactive installer, then wait a short window so an
+            // installer that fails immediately (e.g. missing dependency, bad
+            // argument) is detected and not counted as launched. After the
+            // window, the batch moves on and the user completes setup by hand.
+            var p = app.RunAsUser ? StartAsInteractiveUser(exe, args) : StartProcess(exe, args);
+            if (p is null)
+            {
+                Detail("launch-only: FAILED to start installer process.");
+                return new RunResult { ExitCode = -1, TimedOut = false };
+            }
+            using var probeCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            probeCts.CancelAfter(TimeSpan.FromSeconds(LaunchProbeSeconds));
+            try
+            {
+                await p.WaitForExitAsync(probeCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Still running after the probe window -> launch accepted.
+                Detail("launch-only: installer running after probe window; not waiting (manual setup).");
+                return new RunResult { ExitCode = 0, TimedOut = false };
+            }
+            var code = p.ExitCode;
+            Detail(code == 0
+                ? $"launch-only: installer exited quickly with code 0 within {LaunchProbeSeconds}s."
+                : $"launch-only: installer FAILED early with exit code {code} within {LaunchProbeSeconds}s.");
+            return new RunResult { ExitCode = code, TimedOut = false };
         }
         var result = app.RunAsUser
             ? await RunAsInteractiveUserAsync(exe, args, timeout, ct)
