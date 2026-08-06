@@ -43,20 +43,24 @@ public sealed class GitHubReleaseResolver
         var pattern = new Regex(assetPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         string? url = null, name = null;
+        var matched = new System.Collections.Generic.List<string>();
         using var doc = JsonDocument.Parse(body);
+
+        void Consider(JsonElement a)
+        {
+            var an = a.GetProperty("name").GetString();
+            var au = a.GetProperty("browser_download_url").GetString();
+            if (string.IsNullOrEmpty(an) || string.IsNullOrEmpty(au) || !pattern.IsMatch(an)) return;
+            matched.Add(an);
+            if (url is null) { url = au; name = an; }
+        }
 
         if (prerelease)
         {
             foreach (var rel in doc.RootElement.EnumerateArray())
             {
                 if (!rel.TryGetProperty("assets", out var assets)) continue;
-                foreach (var a in assets.EnumerateArray())
-                {
-                    var an = a.GetProperty("name").GetString();
-                    var au = a.GetProperty("browser_download_url").GetString();
-                    if (!string.IsNullOrEmpty(an) && !string.IsNullOrEmpty(au) && pattern.IsMatch(an))
-                    { url = au; name = an; break; }
-                }
+                foreach (var a in assets.EnumerateArray()) Consider(a);
                 if (url is not null) break;
             }
         }
@@ -64,20 +68,19 @@ public sealed class GitHubReleaseResolver
         {
             var rel = doc.RootElement;
             if (rel.TryGetProperty("assets", out var assets))
-            {
-                foreach (var a in assets.EnumerateArray())
-                {
-                    var an = a.GetProperty("name").GetString();
-                    var au = a.GetProperty("browser_download_url").GetString();
-                    if (!string.IsNullOrEmpty(an) && !string.IsNullOrEmpty(au) && pattern.IsMatch(an))
-                    { url = au; name = an; break; }
-                }
-            }
+                foreach (var a in assets.EnumerateArray()) Consider(a);
         }
 
         if (url is null)
             throw new FileNotFoundException(
                 $"No GitHub release asset matched pattern '{assetPattern}' in {repo}.");
+
+        // Ambiguous regex = catalog bug (could silently pick the wrong arch/build).
+        if (matched.Count > 1)
+            throw new InvalidOperationException(
+                $"GitHub asset pattern '{assetPattern}' in {repo} matched {matched.Count} assets: " +
+                string.Join(", ", matched) + " - tighten the regex to exactly one.");
+
         return new Asset(url, name!);
     }
 }

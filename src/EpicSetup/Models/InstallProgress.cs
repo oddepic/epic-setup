@@ -11,18 +11,6 @@ public enum AppStatus
     Skipped
 }
 
-public sealed class AppResult
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public AppStatus Status { get; set; } = AppStatus.Pending;
-    public string? Message { get; set; }     // status text or error reason
-    public int? ExitCode { get; set; }
-    public string? ResolvedUrl { get; set; }
-    public string? Signer { get; set; }
-    public bool Signed { get; set; }
-}
-
 public sealed class InstallProgress
 {
     public int Total { get; set; }

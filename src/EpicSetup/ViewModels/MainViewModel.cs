@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -29,11 +30,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isInstalling;
     [ObservableProperty] private double _overallProgress;
     [ObservableProperty] private double _downloadProgress;
+    [ObservableProperty] private string _backendLogText = "";
     [ObservableProperty] private string _statusText = "Loading catalog…";
     [ObservableProperty] private string _progressDetail = "";
     [ObservableProperty] private string _catalogSourceText = "";
-
-    public string DownloadPercentText => $"{(int)Math.Round(DownloadProgress * 100)}%";
 
     // Tooltip shown when hovering the "X installed" status text: lists the
     // names of all apps that installed successfully (one per line).
@@ -54,6 +54,8 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnDownloadProgressChanged(double value)
         => OnPropertyChanged(nameof(DownloadPercentText));
+
+    public string DownloadPercentText => $"{(int)Math.Round(DownloadProgress * 100)}%";
 
     public string ContinueLabel => $"Continue ({SelectedCount}/{TotalCount})";
 
@@ -76,23 +78,35 @@ public partial class MainViewModel : ObservableObject
         Categories.Clear();
         _allApps.Clear();
         ReviewItems.Clear();
+        BackendLogText = "";
         IsReviewing = false;
         try
         {
             var (catalog, source) = await Task.Run(() => _catalogService.LoadSync());
             ApplyCatalog(catalog);
-            CatalogSourceText = source switch
+            var srcText = source switch
             {
                 CatalogService.SourceKind.Remote => "catalog · online",
                 CatalogService.SourceKind.Cache => "catalog · cached",
                 _ => "catalog · built-in"
             };
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var versionText = asm.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? asm.GetName().Version?.ToString()
+                ?? "0";
+            if (versionText.IndexOf('+') >= 0) versionText = versionText[..versionText.IndexOf('+')];
+            CatalogSourceText = $"{srcText} · v{versionText}";
             TotalCount = _allApps.Count;
             StatusText = $"{Tabs.Count} tabs · {TotalCount} apps available.";
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            var exePath = process.MainModule?.FileName ?? Environment.ProcessPath ?? "<unknown>";
+            AppendBackendLog($"process: pid={process.Id} exe={exePath}");
+            AppendBackendLog($"catalog: loaded {TotalCount} entries from {srcText}; updatedAt={catalog.UpdatedAt ?? "unknown"}");
         }
         catch (Exception ex)
         {
             StatusText = "Failed to load catalog: " + ex.Message;
+            AppendBackendLog($"catalog: load failed: {ex.GetType().Name}: {ex.Message}");
         }
         finally
         {
@@ -189,6 +203,7 @@ public partial class MainViewModel : ObservableObject
 
         IsInstalling = true;
         OverallProgress = 0;
+        BackendLogText = "";
         ProgressDetail = "Starting…";
         StatusText = $"Installing {selected.Count} apps…";
 
@@ -212,6 +227,9 @@ public partial class MainViewModel : ObservableObject
 
     private void OnProgress(InstallUpdate u)
     {
+        if (!string.IsNullOrWhiteSpace(u.Diagnostic))
+            AppendBackendLog(u.Diagnostic);
+
         if (!string.IsNullOrEmpty(u.AppId))
         {
             var appVm = _allApps.FirstOrDefault(a => a.Id == u.AppId);
@@ -222,14 +240,15 @@ public partial class MainViewModel : ObservableObject
             }
             AppendLog($"{u.AppId} | {u.Status} | {u.Message}");
         }
-        else
+        else if (!string.IsNullOrEmpty(u.Message))
         {
             AppendLog($"--- {u.Status} | {u.Message}");
         }
         if (u.Status == AppStatus.Downloading)
             DownloadProgress = u.DownloadFraction;
         OverallProgress = u.Fraction;
-        ProgressDetail = u.Message ?? "";
+        if (u.Message is not null)
+            ProgressDetail = u.Message;
         if (u.AppId is null && u.Status == AppStatus.Succeeded)
             StatusText = u.Message ?? "Done.";
     }
@@ -242,10 +261,7 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            // Dedupe consecutive identical lines: this drops the constant stream
-            // of "Downloading ..." byte-progress updates, keeping exactly one line
-            // per meaningful state change (Downloading -> Verifying -> Installing
-            // -> Succeeded/Failed). Keeps the log small.
+            // Dedupe consecutive identical lines to keep the log small.
             if (line == _lastLoggedLine) return;
             _lastLoggedLine = line;
 
@@ -262,6 +278,13 @@ public partial class MainViewModel : ObservableObject
         catch { }
     }
 
+    private void AppendBackendLog(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line)) return;
+        BackendLogText = $"[{DateTime.Now:HH:mm:ss}] {line}";
+        AppendLog("backend | " + line);
+    }
+
     private static string Label(AppStatus s, string? msg) => s switch
     {
         AppStatus.Pending => "Pending",
@@ -275,8 +298,9 @@ public partial class MainViewModel : ObservableObject
     };
 
     // Keep only the first reason clause of a failure message (cut at the first
-    // ": "), so we show e.g. "Unexpected publisher." instead of the full detail
-    // / expected-signers list. Messages without a sub-clause stay whole.
+    // Keep only the first reason clause of a failure message (cut at the first
+    // ": "), so we show e.g. "Installer exited" instead of the full detail.
+    // Messages without a sub-clause stay whole.
     private static string ShortenReason(string? message)
     {
         if (string.IsNullOrWhiteSpace(message)) return "Unknown error.";
