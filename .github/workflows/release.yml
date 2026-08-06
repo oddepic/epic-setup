@@ -37,3 +37,4 @@ jobs:
           files: dist/EpicSetup.exe
           fail_on_unmatched_files: true
           generate_release_notes: true
+          prerelease: ${{ endsWith(github.ref_name, '-test') }}

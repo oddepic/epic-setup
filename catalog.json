@@ -35,7 +35,6 @@
                 "Brave"
               ],
               "runAsUser": true,
-              "needsReview": true,
               "homepage": "https://brave.com/"
             },
             {
@@ -49,7 +48,6 @@
               "closeApps": [
                 "Waterfox"
               ],
-              "needsReview": true,
               "homepage": "https://waterfox.net/"
             },
             {
@@ -63,7 +61,6 @@
               "closeApps": [
                 "vivaldi"
               ],
-              "needsReview": true,
               "homepage": "https://vivaldi.com/"
             },
             {
@@ -78,7 +75,6 @@
               "installerType": "Nsis",
               "silentArgs": "/S",
               "runAsUser": true,
-              "needsReview": true,
               "homepage": "https://github.com/imputnet/helium"
             }
           ]
@@ -99,7 +95,6 @@
                 "Discord"
               ],
               "runAsUser": true,
-              "needsReview": true,
               "homepage": "https://discord.com/"
             },
             {
@@ -111,8 +106,7 @@
               "installerType": "Exe",
               "silentArgs": "--silent",
               "runAsUser": true,
-              "installTimeoutSeconds": 300,
-              "needsReview": true,
+              "installTimeoutSeconds": 180,
               "homepage": "https://slack.com/"
             },
             {
@@ -123,7 +117,6 @@
               "url": "https://zoom.us/client/latest/ZoomInstallerFull.msi",
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart",
-              "needsReview": true,
               "homepage": "https://zoom.us/"
             },
             {
@@ -148,8 +141,7 @@
               "url": "https://go.microsoft.com/fwlink/?linkid=2243204&clcid=0x409",
               "installerType": "Exe",
               "silentArgs": "-p",
-              "installTimeoutSeconds": 600,
-              "needsReview": true,
+              "installTimeoutSeconds": 180,
               "homepage": "https://www.microsoft.com/microsoft-teams/"
             }
           ]
@@ -173,7 +165,7 @@
                 "obs64",
                 "obs32"
               ],
-              "installTimeoutSeconds": 600,
+              "installTimeoutSeconds": 180,
               "homepage": "https://obsproject.com/"
             },
             {
@@ -187,7 +179,6 @@
               },
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-",
-              "needsReview": true,
               "homepage": "https://github.com/mpvnet-player/mpv.net"
             },
             {
@@ -202,8 +193,7 @@
                 "Spotify"
               ],
               "runAsUser": true,
-              "installTimeoutSeconds": 600,
-              "needsReview": true,
+              "installTimeoutSeconds": 180,
               "homepage": "https://www.spotify.com/"
             },
             {
@@ -217,7 +207,6 @@
               },
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-",
-              "needsReview": true,
               "homepage": "https://www.audacityteam.org/"
             },
             {
@@ -228,7 +217,6 @@
               "url": "https://download.blender.org/release/Blender5.2/blender-5.2.0-windows-x64.msi",
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart",
-              "needsReview": true,
               "homepage": "https://www.blender.org/"
             },
             {
@@ -242,7 +230,6 @@
               },
               "installerType": "Portable",
               "portableSubdir": "yt-dlp",
-              "needsReview": true,
               "homepage": "https://github.com/yt-dlp/yt-dlp"
             },
             {
@@ -253,7 +240,6 @@
               "url": "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
               "installerType": "Zip",
               "portableSubdir": "ffmpeg",
-              "needsReview": true,
               "homepage": "https://ffmpeg.org/"
             },
             {
@@ -267,7 +253,6 @@
               },
               "installerType": "Nsis",
               "silentArgs": "/S",
-              "needsReview": true,
               "homepage": "https://taiga.moe/"
             },
             {
@@ -279,7 +264,6 @@
               "installerType": "Exe",
               "silentArgs": "--silent",
               "needsUserSetup": true,
-              "needsReview": true,
               "homepage": "https://medal.tv/"
             }
           ]
@@ -299,7 +283,6 @@
               },
               "installerType": "Exe",
               "silentArgs": "/S",
-              "needsReview": true,
               "homepage": "https://www.7-zip.org/"
             },
             {
@@ -316,7 +299,7 @@
               "closeApps": [
                 "PowerToys"
               ],
-              "installTimeoutSeconds": 600,
+              "installTimeoutSeconds": 180,
               "homepage": "https://learn.microsoft.com/windows/powertoys/"
             },
             {
@@ -330,7 +313,6 @@
               },
               "installerType": "Nsis",
               "silentArgs": "/S",
-              "needsReview": true,
               "homepage": "https://www.qbittorrent.org/"
             },
             {
@@ -341,7 +323,6 @@
               "url": "https://diskanalyzer.com/files/wiztree_4_32_setup.exe",
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-",
-              "needsReview": true,
               "homepage": "https://diskanalyzer.com/"
             },
             {
@@ -352,7 +333,6 @@
               "url": "https://www.rarlab.com/rar/winrar-x64-723.exe",
               "installerType": "Exe",
               "silentArgs": "-s",
-              "needsReview": true,
               "homepage": "https://www.rarlab.com/"
             },
             {
@@ -366,7 +346,6 @@
               },
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart",
-              "needsReview": true,
               "homepage": "https://openrgb.org/"
             }
           ]
@@ -383,7 +362,8 @@
               "url": "https://update.code.visualstudio.com/latest/win32-x64/stable",
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /MERGETASKS=!runcode",
-              "homepage": "https://code.visualstudio.com/"
+              "homepage": "https://code.visualstudio.com/",
+              "needsReview": true
             },
             {
               "id": "cursor",
@@ -394,9 +374,9 @@
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /MERGETASKS=!runcode",
               "runAsUser": true,
-              "installTimeoutSeconds": 300,
-              "needsReview": true,
-              "homepage": "https://cursor.sh/"
+              "installTimeoutSeconds": 180,
+              "homepage": "https://cursor.sh/",
+              "needsReview": true
             },
             {
               "id": "antigravity",
@@ -406,9 +386,9 @@
               "url": "https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/2.1.1-6123990880747520/windows-x64/Antigravity%20IDE.exe",
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
-              "installTimeoutSeconds": 300,
-              "needsReview": true,
-              "homepage": "https://antigravity.google/"
+              "installTimeoutSeconds": 180,
+              "homepage": "https://antigravity.google/",
+              "needsReview": true
             },
             {
               "id": "jetbrains-toolbox",
@@ -419,9 +399,9 @@
               "installerType": "Exe",
               "silentArgs": "/headless",
               "runAsUser": true,
-              "installTimeoutSeconds": 300,
-              "needsReview": true,
-              "homepage": "https://www.jetbrains.com/toolbox-app/"
+              "installTimeoutSeconds": 180,
+              "homepage": "https://www.jetbrains.com/toolbox-app/",
+              "needsReview": true
             },
             {
               "id": "arduino-ide",
@@ -438,7 +418,8 @@
                 "Arduino IDE",
                 "arduino"
               ],
-              "homepage": "https://www.arduino.cc/en/software"
+              "homepage": "https://www.arduino.cc/en/software",
+              "needsReview": true
             },
             {
               "id": "dotnet-sdk",
@@ -447,9 +428,9 @@
               "size": 250,
               "installerType": "Script",
               "silentArgs": "& {[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://dot.net/v1/dotnet-install.ps1').Content)) -Channel '10.0' -InstallDir $env:LOCALAPPDATA\\Microsoft\\DotNet}",
-              "installTimeoutSeconds": 600,
-              "needsReview": true,
-              "homepage": "https://dotnet.microsoft.com/"
+              "installTimeoutSeconds": 180,
+              "homepage": "https://dotnet.microsoft.com/",
+              "needsReview": true
             },
             {
               "id": "python",
@@ -459,8 +440,8 @@
               "url": "https://www.python.org/ftp/python/3.14.6/python-3.14.6-amd64.exe",
               "installerType": "Burn",
               "silentArgs": "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0",
-              "needsReview": true,
-              "homepage": "https://www.python.org/"
+              "homepage": "https://www.python.org/",
+              "needsReview": true
             },
             {
               "id": "git",
@@ -473,8 +454,8 @@
               },
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS",
-              "needsReview": true,
-              "homepage": "https://gitforwindows.org/"
+              "homepage": "https://gitforwindows.org/",
+              "needsReview": true
             },
             {
               "id": "dotnet-desktop-runtime",
@@ -484,8 +465,8 @@
               "url": "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.10/windowsdesktop-runtime-10.0.10-win-x64.exe",
               "installerType": "Burn",
               "silentArgs": "/install /quiet /norestart",
-              "needsReview": true,
-              "homepage": "https://dotnet.microsoft.com/download/dotnet"
+              "homepage": "https://dotnet.microsoft.com/download/dotnet",
+              "needsReview": true
             },
             {
               "id": "temurin-jdk",
@@ -498,8 +479,9 @@
               },
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJavaHome,FeatureJarFileRunWith",
-              "installTimeoutSeconds": 300,
-              "homepage": "https://adoptium.net/"
+              "installTimeoutSeconds": 180,
+              "homepage": "https://adoptium.net/",
+              "needsReview": true
             }
           ]
         },
@@ -518,7 +500,7 @@
               },
               "installerType": "Nsis",
               "silentArgs": "/S",
-              "installTimeoutSeconds": 300,
+              "installTimeoutSeconds": 180,
               "homepage": "https://obsidian.md/"
             },
             {
@@ -530,7 +512,6 @@
               "installerType": "Nsis",
               "silentArgs": "/S",
               "runAsUser": true,
-              "needsReview": true,
               "homepage": "https://www.notion.so/"
             },
             {
@@ -541,8 +522,9 @@
               "url": "https://download.documentfoundation.org/libreoffice/stable/26.2.5/win/x86_64/LibreOffice_26.2.5_Win_x86-64.msi",
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart",
-              "installTimeoutSeconds": 300,
-              "homepage": "https://www.libreoffice.org/"
+              "installTimeoutSeconds": 180,
+              "homepage": "https://www.libreoffice.org/",
+              "needsReview": true
             },
             {
               "id": "bitdefender",
@@ -552,8 +534,8 @@
               "url": "https://download.bitdefender.com/windows/installer/en-us/bitdefender_avfree.exe",
               "installerType": "Exe",
               "needsUserSetup": true,
-              "needsReview": true,
-              "homepage": "https://www.bitdefender.com/"
+              "homepage": "https://www.bitdefender.com/",
+              "needsReview": true
             },
             {
               "id": "malwarebytes",
@@ -563,8 +545,8 @@
               "url": "https://downloads.malwarebytes.com/file/mb-windows",
               "installerType": "Exe",
               "needsUserSetup": true,
-              "needsReview": true,
-              "homepage": "https://www.malwarebytes.com/"
+              "homepage": "https://www.malwarebytes.com/",
+              "needsReview": true
             },
             {
               "id": "avast",
@@ -574,8 +556,8 @@
               "url": "https://bits.avcdn.net/productfamily_ANTIVIRUS/insttype_FREE/platform_WIN/installertype_ONLINE/build_RELEASE/avast_free_antivirus_setup_online.exe",
               "installerType": "Exe",
               "needsUserSetup": true,
-              "needsReview": true,
-              "homepage": "https://www.avast.com/"
+              "homepage": "https://www.avast.com/",
+              "needsReview": true
             }
           ]
         }
@@ -596,7 +578,7 @@
               "url": "https://cdn.fastly.steamstatic.com/client/installer/SteamSetup.exe",
               "installerType": "Nsis",
               "silentArgs": "/S",
-              "installTimeoutSeconds": 600,
+              "installTimeoutSeconds": 180,
               "homepage": "https://store.steampowered.com/"
             },
             {
@@ -607,8 +589,7 @@
               "url": "https://launcher-public-service-prod-m.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi",
               "installerType": "Msi",
               "silentArgs": "/quiet /norestart",
-              "installTimeoutSeconds": 300,
-              "needsReview": true,
+              "installTimeoutSeconds": 180,
               "homepage": "https://www.epicgames.com/"
             },
             {
@@ -619,7 +600,6 @@
               "url": "https://valorant.secure.dyn.riotcdn.net/channels/public/x/installer/current/live.live.na.exe",
               "installerType": "Exe",
               "needsUserSetup": true,
-              "needsReview": true,
               "homepage": "https://www.riotgames.com/"
             },
             {
@@ -630,9 +610,9 @@
               "url": "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe",
               "installerType": "Exe",
               "needsUserSetup": true,
-              "installTimeoutSeconds": 600,
-              "needsReview": true,
-              "homepage": "https://socialclub.rockstargames.com/rockstar-games-launcher"
+              "installTimeoutSeconds": 180,
+              "homepage": "https://socialclub.rockstargames.com/rockstar-games-launcher",
+              "needsReview": true
             },
             {
               "id": "prism-launcher",
@@ -646,8 +626,7 @@
               "installerType": "Nsis",
               "silentArgs": "/S",
               "runAsUser": true,
-              "installTimeoutSeconds": 300,
-              "needsReview": true,
+              "installTimeoutSeconds": 180,
               "homepage": "https://prismlauncher.org/"
             }
           ]
@@ -667,8 +646,7 @@
               "installerType": "Exe",
               "silentArgs": "--silent",
               "runAsUser": true,
-              "installTimeoutSeconds": 600,
-              "needsReview": true,
+              "installTimeoutSeconds": 180,
               "homepage": "https://osu.ppy.sh/"
             }
           ]
@@ -682,8 +660,8 @@
               "description": "GPU overclocking & monitoring - official download page requires manual setup",
               "size": 60,
               "needsUserSetup": true,
-              "needsReview": true,
-              "homepage": "https://www.msi.com/Landing/afterburner/graphics-cards"
+              "homepage": "https://www.msi.com/Landing/afterburner/graphics-cards",
+              "needsReview": true
             }
           ]
         }

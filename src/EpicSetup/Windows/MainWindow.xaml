@@ -132,6 +132,13 @@
                                                                                Foreground="{StaticResource WarnBrush}"
                                                                                Text="REVIEW"/>
                                                                 </Border>
+                                                                <Border Visibility="{Binding HasManualSetup, Converter={StaticResource BoolVis}}"
+                                                                        Background="#103A5C" CornerRadius="3" Padding="6,1"
+                                                                        Margin="8,0,0,0" VerticalAlignment="Center">
+                                                                    <TextBlock Style="{StaticResource ChipText}"
+                                                                               Foreground="{StaticResource InfoBrush}"
+                                                                               Text="REQ. SETUP"/>
+                                                                </Border>
                                                             </StackPanel>
                                                         </CheckBox.Content>
                                                     </CheckBox>
