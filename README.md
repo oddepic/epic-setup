@@ -13,7 +13,7 @@ access through UAC.
 
 ```text
 catalog.json                 # App catalog and installer metadata
-src/EpicSetup/
+src/epic-setup/
   Models/                    # Catalog and domain models
   Services/                  # Catalog, download, release, icon, and install services
   ViewModels/                # MVVM application state
@@ -58,9 +58,9 @@ executable. The source can be overridden with `EPICSETUP_CATALOG_OWNER`,
 Install the .NET 10 SDK, then run:
 
 ```pwsh
-dotnet build src/EpicSetup/EpicSetup.csproj -c Debug -p:Platform=x64
+dotnet build src/epic-setup/epic-setup.csproj -c Debug -p:Platform=x64
 
-dotnet publish src/EpicSetup/EpicSetup.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:SatelliteResourceLanguages=en -o dist
+dotnet publish src/epic-setup/epic-setup.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:SatelliteResourceLanguages=en -o dist
 ```
 
 Use `tools\run-embedded.cmd` to test the catalog compiled into the executable.

@@ -32,7 +32,7 @@ function Retry([scriptblock]$action, [int]$tries = 4) {
 }
 
 function Invoke-GhApi([string]$url) {
-    $headers = @{ 'User-Agent' = 'EpicSetup'; 'Accept' = 'application/vnd.github+json' }
+    $headers = @{ 'User-Agent' = 'epic-setup'; 'Accept' = 'application/vnd.github+json' }
     if ($token) { $headers['Authorization'] = "Bearer $token" }
     Retry { Invoke-RestMethod -Uri $url -Headers $headers }
 }

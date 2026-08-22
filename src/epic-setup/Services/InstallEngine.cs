@@ -37,7 +37,7 @@ public sealed class InstallEngine
         _runner = runner;
     }
 
-    private static string DownloadsRoot => Path.Combine(Path.GetTempPath(), "EpicSetup");
+    private static string DownloadsRoot => Path.Combine(Path.GetTempPath(), "epic-setup");
 
     public async Task RunAsync(IReadOnlyList<AppEntry> apps,
         IProgress<InstallUpdate>? progress, CancellationToken ct)

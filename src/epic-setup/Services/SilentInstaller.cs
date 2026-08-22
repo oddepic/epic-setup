@@ -143,7 +143,7 @@ public sealed class SilentInstaller
     private static string InstallerLogPath(AppEntry app)
     {
         var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "EpicSetup", "logs");
+            "epic-setup", "logs");
         try { Directory.CreateDirectory(dir); } catch { }
         return Path.Combine(dir, app.Id + ".log");
     }

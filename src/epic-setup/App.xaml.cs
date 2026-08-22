@@ -13,7 +13,7 @@ public partial class App : Application
         // Single instance: a second launch brings the existing window to the
         // front instead of starting another app (which used to run the wrong,
         // stale remote catalog alongside the first one).
-        _singleInstance = new Mutex(true, "EpicSetup_SingleInstance", out bool createdNew);
+        _singleInstance = new Mutex(true, "epic-setup_single-instance", out bool createdNew);
         if (!createdNew)
         {
             Shutdown();

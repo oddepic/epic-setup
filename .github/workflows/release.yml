@@ -35,7 +35,7 @@ jobs:
         shell: pwsh
         run: |
           $args = @(
-            'src/EpicSetup/EpicSetup.csproj',
+            'src/epic-setup/epic-setup.csproj',
             '-c', 'Release',
             '-r', 'win-x64',
             '--self-contained', 'true',
@@ -53,7 +53,7 @@ jobs:
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/EpicSetup.exe
+          files: dist/epic-setup.exe
           fail_on_unmatched_files: true
           generate_release_notes: true
           prerelease: ${{ endsWith(github.ref_name, '-test') }}

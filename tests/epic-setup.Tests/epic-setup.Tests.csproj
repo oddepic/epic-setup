@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\EpicSetup\EpicSetup.csproj" />
+    <ProjectReference Include="..\..\src\epic-setup\epic-setup.csproj" />
   </ItemGroup>
 
   <ItemGroup>
