@@ -9,11 +9,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
-    <AssemblyName>EpicSetup</AssemblyName>
+    <AssemblyName>epic-setup</AssemblyName>
     <RootNamespace>EpicSetup</RootNamespace>
-    <Version>1.0.10-test</Version>
-    <Company>Epic Setup</Company>
-    <Product>Epic Setup</Product>
+    <Version>1.0.14-test</Version>
+    <Company>epic setup</Company>
+    <Product>epic setup</Product>
     <Copyright>Open source contributors</Copyright>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationDefaultWindowWidth>1000</ApplicationDefaultWindowWidth>
@@ -32,9 +32,8 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>
-
   <ItemGroup>
-    <InternalsVisibleTo Include="EpicSetup.Tests" />
+    <InternalsVisibleTo Include="epic-setup.Tests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,7 +46,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="..\..\catalog.json" Link="catalog.json">
-      <LogicalName>EpicSetup.catalog.json</LogicalName>
+      <LogicalName>epic-setup.catalog.json</LogicalName>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

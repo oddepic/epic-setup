@@ -16,7 +16,7 @@ public sealed class IconService
 
     private static string CacheDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "EpicSetup", "icons");
+            "epic-setup", "icons");
 
     // Bundled icon overrides keyed by homepage domain (for apps that need an explicit icon URL).
     private static readonly Dictionary<string, string> Overrides = new(StringComparer.OrdinalIgnoreCase)

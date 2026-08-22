@@ -1,8 +1,8 @@
-# fetch-icons.ps1 — reproducible Epic Setup icon bundler.
+# fetch-icons.ps1 — reproducible epic setup icon bundler.
 #
 # Downloads a curated PNG per catalog app, preserving aspect ratio (no crop /
 # no stretch), downscale-only to 64 px longest side, transparency kept, into
-# src/EpicSetup/Assets/Icons/{id}.png.  Resumable: re-run to fill only the
+# src/epic-setup/Assets/Icons/{id}.png.  Resumable: re-run to fill only the
 # missing icons (use -Force to refetch all).  Anything still missing falls
 # back to the app's runtime Clearbit/favicon chain (correct-by-domain) + chip.
 #
@@ -14,7 +14,7 @@ param([switch]$Force)
 $ErrorActionPreference = 'Stop'
 
 $Root   = Split-Path -Parent $PSScriptRoot
-$OutDir = Join-Path $Root 'src\EpicSetup\Assets\Icons'
+$OutDir = Join-Path $Root 'src\epic-setup\Assets\Icons'
 New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 if ($Force) { Get-ChildItem $OutDir -File | Remove-Item -Force }
 

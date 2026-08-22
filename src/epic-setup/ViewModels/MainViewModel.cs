@@ -253,7 +253,7 @@ public partial class MainViewModel : ObservableObject
             StatusText = u.Message ?? "Done.";
     }
 
-    // Live install log at %LOCALAPPDATA%\EpicSetup\install.log - contains the
+    // Live install log at %LOCALAPPDATA%\epic-setup\install.log - contains the
     // FULL raw messages (not the shortened UI text), so failures are checkable.
     private string? _lastLoggedLine;
 
@@ -265,7 +265,7 @@ public partial class MainViewModel : ObservableObject
             if (line == _lastLoggedLine) return;
             _lastLoggedLine = line;
 
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicSetup");
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "epic-setup");
             Directory.CreateDirectory(dir);
             var path = Path.Combine(dir, "install.log");
 

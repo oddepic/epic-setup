@@ -16,7 +16,7 @@ internal static class Http
         {
             Timeout = TimeSpan.FromMinutes(30)
         };
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("EpicSetup/1.0 (+https://github.com/epic-setup)");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("epic-setup/1.0 (+https://github.com/oddepic/epic-setup)");
         return client;
     }
 

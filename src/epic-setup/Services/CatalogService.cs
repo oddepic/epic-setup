@@ -54,7 +54,7 @@ public sealed class CatalogService
 
     private static string CachePath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "EpicSetup", "catalog.cache.json");
+            "epic-setup", "catalog.cache.json");
 
     public (Catalog catalog, SourceKind source) LoadSync()
     {
@@ -121,7 +121,7 @@ public sealed class CatalogService
         var asm = Assembly.GetExecutingAssembly();
         var names = asm.GetManifestResourceNames();
         var name = names.FirstOrDefault(n => n.EndsWith("catalog.json"))
-                   ?? "EpicSetup.catalog.json";
+                   ?? "epic-setup.catalog.json";
         using var stream = asm.GetManifestResourceStream(name)
             ?? throw new InvalidOperationException("Embedded catalog.json not found.");
         return JsonSerializer.Deserialize<Catalog>(stream, JsonOpts)
