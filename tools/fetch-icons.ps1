@@ -1,4 +1,4 @@
-# fetch-icons.ps1 — reproducible Epic Setup icon bundler.
+# fetch-icons.ps1 — reproducible epic setup icon bundler.
 #
 # Downloads a curated PNG per catalog app, preserving aspect ratio (no crop /
 # no stretch), downscale-only to 64 px longest side, transparency kept, into

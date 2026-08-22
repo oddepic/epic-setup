@@ -1,6 +1,6 @@
-# Epic Setup
+# epic setup
 
-Epic Setup is a compact, Ninite-style Windows app installer. It presents a
+epic setup is a compact, Ninite-style Windows app installer. It presents a
 catalog of curated applications, lets users select and review them, then
 downloads and runs their installers with installer-specific silent switches.
 It has no telemetry, advertising, or winget dependency.

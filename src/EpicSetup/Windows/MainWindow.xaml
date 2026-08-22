@@ -6,7 +6,7 @@
         xmlns:cv="clr-namespace:EpicSetup.Converters"
         xmlns:md="clr-namespace:EpicSetup.Models"
         xmlns:ctl="clr-namespace:EpicSetup.Controls"
-        Title="Epic Setup"
+        Title="epic setup"
         Height="660" Width="1000"
         MinHeight="560" MinWidth="860"
         Background="{StaticResource BgBrush}"

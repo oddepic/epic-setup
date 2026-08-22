@@ -12,8 +12,8 @@
     <AssemblyName>EpicSetup</AssemblyName>
     <RootNamespace>EpicSetup</RootNamespace>
     <Version>1.0.14-test</Version>
-    <Company>Epic Setup</Company>
-    <Product>Epic Setup</Product>
+    <Company>epic setup</Company>
+    <Product>epic setup</Product>
     <Copyright>Open source contributors</Copyright>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationDefaultWindowWidth>1000</ApplicationDefaultWindowWidth>

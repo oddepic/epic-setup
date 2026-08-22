@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Headless catalog verifier for Epic Setup. Resolves every app's download
+  Headless catalog verifier for epic setup. Resolves every app's download
   source and HEAD-checks that the URL is alive and serves a real file.
 
 .PARAMETER Catalog
