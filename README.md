@@ -41,7 +41,7 @@ tools/
 
 ## Catalog
 
-The catalog currently contains 48 apps organized into Apps and Games tabs.
+The catalog currently contains 46 apps organized into Apps and Games tabs.
 Edit [`catalog.json`](./catalog.json) to add or update entries. Apps can use a
 static vendor URL or a GitHub release asset, and support installer types such
 as MSI, NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, and script-based

@@ -593,28 +593,6 @@
               "homepage": "https://www.epicgames.com/"
             },
             {
-              "id": "riot-client",
-              "name": "Riot Client",
-              "description": "Riot games launcher - only ships via full game installers (Valorant), needs account login",
-              "size": 100,
-              "url": "https://valorant.secure.dyn.riotcdn.net/channels/public/x/installer/current/live.live.na.exe",
-              "installerType": "Exe",
-              "needsUserSetup": true,
-              "homepage": "https://www.riotgames.com/"
-            },
-            {
-              "id": "rockstar-launcher",
-              "name": "Rockstar Games Launcher",
-              "description": "Rockstar game store & library - interactive setup and account login required",
-              "size": 100,
-              "url": "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe",
-              "installerType": "Exe",
-              "needsUserSetup": true,
-              "installTimeoutSeconds": 180,
-              "homepage": "https://socialclub.rockstargames.com/rockstar-games-launcher",
-              "needsReview": true
-            },
-            {
               "id": "prism-launcher",
               "name": "Prism Launcher",
               "description": "Custom Minecraft launcher",

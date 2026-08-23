@@ -15,7 +15,7 @@ public class CatalogManifestTests
         "vscode", "cursor", "antigravity", "jetbrains-toolbox",
         "python", "dotnet-desktop-runtime",
         "notion", "libreoffice", "bitdefender", "malwarebytes", "avast",
-        "steam", "epic-games", "riot-client", "rockstar-launcher"
+        "steam", "epic-games"
     };
 
     private static readonly IReadOnlyList<string> GitHubIds = new[]
@@ -33,9 +33,9 @@ public class CatalogManifestTests
         var apps = CatalogFixture.AllApps(catalog);
 
         Assert.Equal(2, catalog.Tabs.Count);
-        Assert.Equal(48, apps.Count);
+        Assert.Equal(46, apps.Count);
 
-        Assert.Equal(48, apps.Select(a => a.Id).Distinct().Count());
+        Assert.Equal(46, apps.Select(a => a.Id).Distinct().Count());
         foreach (var app in apps)
         {
             Assert.False(string.IsNullOrWhiteSpace(app.Id));
