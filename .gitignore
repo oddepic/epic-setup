@@ -22,3 +22,9 @@ epic-setup.cache.json
 
 # Excepción: No Muestres/Ignores el README.md principal
 !README.md
+
+# Local agent tooling (never ship)
+.agents/
+.claude/
+agent/
+skills-lock.json
