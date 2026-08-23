@@ -1,80 +1,151 @@
 # epic setup
 
-epic setup is a compact, Ninite-style Windows app installer. It presents a
-catalog of curated applications, lets users select and review them, then
-downloads and runs their installers with installer-specific silent switches.
-It has no telemetry, advertising, or winget dependency.
+<p align="left">
+  <img alt="release" src="https://img.shields.io/github/v/release/oddepic/epic-setup?include_prereleases&label=release&color=blue">
+  <img alt="platform" src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-lightgrey">
+  <img alt=".net" src="https://img.shields.io/badge/.NET-10.0-purple">
+  <img alt="c#" src="https://img.shields.io/badge/C%23-13-green">
+  <img alt="ui" src="https://img.shields.io/badge/UI-WPF%20%2B%20MVVM-blueviolet">
+</p>
 
-The current application targets Windows 10/11 x64 and is distributed as a
-self-contained single-file executable. The main UI requests administrator
-access through UAC.
+epic setup is a compact Ninite-style installer for Windows. Pick apps from a
+curated catalog, hit install once, and every entry is acquired through its best
+available channel: the winget CLI where a verified package ID exists, or a
+direct vendor/GitHub download as fallback. Silent switches, no telemetry, no
+banners, no winget dependency for the app itself.
 
-## Project Structure
+## ✨ Key features
+
+- 🎯 One-click batch installs with silent switches per installer type (MSI,
+  NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, script)
+- 📦 Multi-backend acquisition: entries declare an ordered `sources` chain
+  (`winget` → `github` → `url`) and the engine falls back automatically when a
+  source fails
+- ⚡ winget integration without winget dependency: package-manager installs are
+  delegated through `winget --exact --silent`, but the app never requires it;
+  missing winget just means the fallback channel takes over
+- 🔁 Live fallback proof: download failures and non-zero installer exits move to
+  the next declared source; the log shows which backend served each app
+- 🧰 46-app curated catalog across Apps and Games tabs with icons, sizes, and
+  per-app timeouts
+- 🪶 Self-contained single-file exe, no runtime install needed
+
+## 🖼️ Preview
+
+> Screenshot placeholder: main window with category tabs, app grid, and backend
+> log pane. Replace with a GIF of a batch install when available.
 
 ```text
-catalog.json                 # App catalog and installer metadata
-src/epic-setup/
-  Models/                    # Catalog and domain models
-  Services/                  # Catalog, download, release, icon, and install services
-  ViewModels/                # MVVM application state
-  Windows/                   # Main WPF window
-  Controls/                  # Custom layout controls
-  Themes/                   # Dark-theme XAML styles
-  Assets/Icons/             # Bundled application icons
-  Fonts/                   # Bundled JetBrains Mono fonts
-tools/
-  fetch-icons.ps1            # Icon download and normalization tool
-  verify-catalog.ps1         # Catalog source and URL checks
-  run-embedded.cmd           # Launches the executable with embedded catalog data
+[ screenshot coming soon ]
 ```
 
-## Built With
+## 📦 Prerequisites & installation
 
-- **C# 13** for application and service code
-- **.NET 10** with `net10.0-windows`
-- **WPF** and **XAML** for the desktop interface
-- **CommunityToolkit.Mvvm 8.4.0** for MVVM support; the only NuGet dependency
-- **PowerShell 7** for build-time tooling and catalog checks
-- **JSON** for the application catalog and **MSBuild/XML** for project configuration
-- **PNG** icons and bundled **JetBrains Mono** fonts
-- **GitHub Actions** for release builds on `v*` tags
+Requirements:
 
-## Catalog
+- Windows 10/11 x64
+- .NET 10 SDK (user-local install works fine)
 
-The catalog currently contains 46 apps organized into Apps and Games tabs.
-Edit [`catalog.json`](./catalog.json) to add or update entries. Apps declare an ordered `sources` list. Package manager sources (winget)
-come first where a verified package ID exists, with a static vendor URL or
-GitHub release asset as fallback. Downloaded artifacts support installer
-types such as MSI, NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, and
-script-based installs.
-
-At startup, the application loads the catalog from the remote GitHub copy,
-then falls back to a local cache and finally to the catalog embedded in the
-executable. The source can be overridden with `EPICSETUP_CATALOG_OWNER`,
-`EPICSETUP_CATALOG_REPO`, `EPICSETUP_CATALOG_BRANCH`, or
-`EPICSETUP_CATALOG_SOURCE=embedded`.
-
-## Build
-
-Install the .NET 10 SDK, then run:
+Clone and set up:
 
 ```pwsh
-dotnet build src/epic-setup/epic-setup.csproj -c Debug -p:Platform=x64
+git clone https://github.com/oddepic/epic-setup.git
+cd epic-setup
 
-dotnet publish src/epic-setup/epic-setup.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:SatelliteResourceLanguages=en -o dist
+# one-time SDK install (user-local, no admin):
+& ([scriptblock]::Create((iwr -UseBasicParsing https://dot.net/v1/dotnet-install.ps1).Content)) -Channel '10.0' -InstallDir "$env:LOCALAPPDATA\Microsoft\DotNet"
+$env:Path = "$env:LOCALAPPDATA\Microsoft\DotNet;$env:Path"
+$env:DOTNET_ROOT = "$env:LOCALAPPDATA\Microsoft\DotNet"
 ```
 
-Use `tools\run-embedded.cmd` to test the catalog compiled into the executable.
-GitHub Actions builds and attaches the executable to releases created from
-`v*` tags.
+Build:
 
-## Current Security Status
+```pwsh
+# debug build:
+dotnet build src/epic-setup/epic-setup.csproj -c Debug -p:Platform=x64
 
-The previous Authenticode, publisher, and SHA-256 verification layer was
-removed as part of an ongoing security redesign. The current engine downloads
-and runs installers without an install-time security gate, and the remote
-catalog is not authenticated or integrity-pinned. This build must not be
-treated as the final secure distribution model.
+# tests:
+dotnet test tests/epic-setup.Tests/epic-setup.Tests.csproj -c Debug -p:Platform=x64
 
-The executable is currently unsigned, so Windows SmartScreen may show a
-warning on first launch.
+# single-file release exe into dist\:
+dotnet publish src/epic-setup/epic-setup.csproj -c Release -r win-x64 --self-contained true `
+  -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false `
+  -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none `
+  -p:SatelliteResourceLanguages=en -o dist
+```
+
+## 🚀 Usage guide
+
+Run the built exe with the catalog embedded at compile time (recommended while
+developing; avoids pulling a stale remote catalog):
+
+```pwsh
+tools\run-embedded.cmd   # closes old instances, sets EPICSETUP_EMBEDDED_CATALOG=1
+```
+
+Run the published exe directly:
+
+```pwsh
+.\dist\epic-setup.exe    # loads the remote catalog from GitHub first
+```
+
+Catalog source overrides:
+
+```pwsh
+$env:EPICSETUP_CATALOG_SOURCE = "embedded"        # force embedded catalog
+$env:EPICSETUP_CATALOG_OWNER   = "your-user"      # remote catalog override
+$env:EPICSETUP_CATALOG_REPO    = "your-fork"
+$env:EPICSETUP_CATALOG_BRANCH  = "main"
+$env:EPICSETUP_GH_TOKEN        = "<token>"        # higher GitHub API rate limits
+```
+
+Add an app by editing [`catalog.json`](./catalog.json). Entries declare an
+ordered sources chain; verify winget IDs live before adding them
+(`winget show --id <id> --exact`):
+
+```json
+{
+  "id": "7-zip",
+  "name": "7-Zip",
+  "description": "File archiver",
+  "homepage": "https://www.7-zip.org/",
+  "installerType": "Nsis",
+  "sources": [
+    { "kind": "winget", "id": "7zip.7zip" },
+    { "kind": "github", "github": { "repo": "ip7z/7zip", "asset": "^7z[0-9]+-x64\\.exe$" } },
+    { "kind": "url", "url": "https://www.7-zip.org/a/7z2408-x64.exe" }
+  ]
+}
+```
+
+The engine tries sources top-down until one succeeds. `installerType` and
+`silentArgs` apply to downloaded artifacts; delegated installs use the package
+manager's own silent flags.
+
+Logs land in `%LOCALAPPDATA%\epic-setup\install.log` plus per-installer logs in
+`%LOCALAPPDATA%\epic-setup\logs\`.
+
+## 🗺️ Roadmap
+
+- [x] Per-entry multi-backend acquisition with automatic fallback
+- [x] winget CLI backend, IDs verified live against the catalog
+- [ ] Publish tracking issue + migrate remaining edge-case entries (avast)
+- [ ] scoop backend (portable/CLI tool coverage)
+- [ ] chocolatey backend (opt-in)
+- [ ] Bootstrap flow for missing package managers, gated behind explicit user consent
+- [ ] Security rework: artifact trust decisions layered on top of working downloads
+
+## 🤝 Contributing
+
+Issues and PRs both welcome.
+
+- Bugs and requests: open a GitHub issue with the install log attached
+  (`%LOCALAPPDATA%\epic-setup\install.log`)
+- Code: branch from `main` using `<type>/<description>` names (`feat/…`,
+  `fix/…`, `chore/…`), keep PRs focused, and make sure `dotnet test` passes
+- Catalog additions: follow the `sources` schema above and include evidence the
+  download URL or package ID is correct
+
+## 📄 License
+
+No license yet. All rights reserved by the repository owner until one is chosen.
