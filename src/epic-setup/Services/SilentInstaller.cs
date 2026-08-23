@@ -156,7 +156,7 @@ public sealed class SilentInstaller
     }
 
     /// <summary>Kills any running process matching the catalog's closeApps names.</summary>
-    private static void CloseRunning(IReadOnlyList<string> names)
+    internal static void CloseRunning(IReadOnlyList<string> names)
     {
         foreach (var raw in names)
         {
@@ -176,6 +176,56 @@ public sealed class SilentInstaller
                 // process enumeration can race; ignore
             }
         }
+    }
+
+    /// <summary>
+    /// Runs an arbitrary command with output captured for diagnostics. Used by
+    /// delegated installs (package-manager backends).
+    /// </summary>
+    public async Task<RunResult> RunCommandAsync(string executable, IReadOnlyList<string> arguments,
+        int timeoutSeconds, CancellationToken ct, IProgress<string>? diagnostics = null)
+    {
+        void Detail(string message) => diagnostics?.Report(message);
+        var psi = new ProcessStartInfo(executable)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WindowStyle = ProcessWindowStyle.Hidden,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        foreach (var a in arguments) psi.ArgumentList.Add(a);
+
+        var shownArgs = string.Join(' ', arguments);
+        Detail($"command: \"{executable}\" {shownArgs}");
+        using var p = new Process { StartInfo = psi };
+        try { p.Start(); }
+        catch (Exception ex)
+        {
+            Detail($"failed to start: {ex.Message}");
+            return new RunResult { ExitCode = -1 };
+        }
+
+        var outTask = p.StandardOutput.ReadToEndAsync(ct);
+        var errTask = p.StandardError.ReadToEndAsync(ct);
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(Math.Max(5, timeoutSeconds)));
+        try
+        {
+            await p.WaitForExitAsync(timeoutCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            KillTree(p);
+            try { await outTask; } catch { }
+            try { await errTask; } catch { }
+            if (ct.IsCancellationRequested) throw;
+            return new RunResult { ExitCode = -1, TimedOut = true };
+        }
+        try { await outTask; } catch { }
+        try { await errTask; } catch { }
+        Detail($"process result: exitCode={p.ExitCode}.");
+        return new RunResult { ExitCode = p.ExitCode };
     }
 
     private static async Task<RunResult> RunScriptAsync(string command, int timeoutSeconds, CancellationToken ct)

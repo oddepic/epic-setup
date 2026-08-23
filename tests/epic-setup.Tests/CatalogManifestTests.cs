@@ -6,26 +6,6 @@ namespace EpicSetup.Tests;
 
 public class CatalogManifestTests
 {
-    private static readonly IReadOnlyList<string> StaticIds = new[]
-    {
-        "chrome", "waterfox", "vivaldi",
-        "discord", "slack", "zoom", "telegram", "teams",
-        "spotify", "blender", "ffmpeg", "medal",
-        "wiztree", "winrar",
-        "vscode", "cursor", "antigravity", "jetbrains-toolbox",
-        "python", "dotnet-desktop-runtime",
-        "notion", "libreoffice", "bitdefender", "malwarebytes", "avast",
-        "steam", "epic-games"
-    };
-
-    private static readonly IReadOnlyList<string> GitHubIds = new[]
-    {
-        "brave", "helium", "obs-studio", "mpvnet", "audacity", "yt-dlp", "taiga",
-        "7-zip", "powertoys", "qbittorrent", "openrgb",
-        "arduino-ide", "git", "temurin-jdk", "obsidian",
-        "prism-launcher", "osu-lazer"
-    };
-
     [Fact]
     public void Catalog_has_expected_shape()
     {
@@ -48,53 +28,60 @@ public class CatalogManifestTests
     }
 
     [Fact]
-    public void Every_app_has_exactly_one_download_path()
+    public void Every_app_has_acquisition_sources()
     {
         var apps = CatalogFixture.AllApps(CatalogFixture.Load());
         foreach (var app in apps)
         {
-            if (app.Id == "dotnet-sdk")
+            if (app.ParsedType == AppInstallerType.Script)
             {
-                Assert.Equal(AppInstallerType.Script, app.ParsedType);
-                Assert.True(string.IsNullOrEmpty(app.Url));
-                Assert.Null(app.GitHub);
+                Assert.Empty(app.EffectiveSources); // inline command, no acquisition
                 continue;
             }
-
             if (app.Id == "msi-afterburner")
             {
-                Assert.True(string.IsNullOrEmpty(app.Url));
-                Assert.Null(app.GitHub);
+                Assert.Empty(app.EffectiveSources); // manual-only entry
                 continue;
             }
-
-            var hasUrl = !string.IsNullOrEmpty(app.Url);
-            var hasGitHub = app.GitHub is not null && !string.IsNullOrEmpty(app.GitHub.Repo);
-            Assert.True(hasUrl ^ hasGitHub, $"{app.Id} must have exactly one of url/github");
+            Assert.True(app.EffectiveSources.Count > 0,
+                $"{app.Id} has no usable acquisition source");
         }
     }
 
     [Fact]
-    public void Static_and_GitHub_sources_match_expected_sets()
+    public void Winget_first_sources_are_in_place()
     {
         var apps = CatalogFixture.AllApps(CatalogFixture.Load());
+        foreach (var app in apps)
+        {
+            var srcs = app.EffectiveSources;
+            if (srcs.Count == 0) continue; // script / manual-only
 
-        var staticIds = apps.Where(a => !string.IsNullOrEmpty(a.Url)).Select(a => a.Id).OrderBy(x => x).ToArray();
-        var githubIds = apps.Where(a => a.GitHub is not null && !string.IsNullOrEmpty(a.GitHub.Repo))
-            .Select(a => a.Id).OrderBy(x => x).ToArray();
+            if (app.Id == "avast")
+            {
+                // No verified winget id yet; direct download only.
+                Assert.Equal(AppSourceKind.Url, srcs[0].Kind);
+                continue;
+            }
 
-        Assert.Equal(StaticIds.OrderBy(x => x), staticIds);
-        Assert.Equal(GitHubIds.OrderBy(x => x), githubIds);
+            Assert.Equal(AppSourceKind.Winget, srcs[0].Kind);
+            Assert.False(string.IsNullOrWhiteSpace(srcs[0].WingetId),
+                $"{app.Id} winget source lacks a package id");
+            Assert.True(srcs.Count >= 2, $"{app.Id} should carry a fallback source");
+        }
     }
 
     [Fact]
     public void Every_static_url_is_https()
     {
         var apps = CatalogFixture.AllApps(CatalogFixture.Load());
-        foreach (var app in apps.Where(a => !string.IsNullOrEmpty(a.Url)))
+        foreach (var app in apps)
         {
-            Assert.True(Uri.TryCreate(app.Url, UriKind.Absolute, out var uri), $"{app.Id} URL is not absolute");
-            Assert.Equal("https", uri.Scheme);
+            foreach (var source in app.EffectiveSources.Where(s => s.Kind == AppSourceKind.Url))
+            {
+                Assert.True(Uri.TryCreate(source.Url, UriKind.Absolute, out var uri), $"{app.Id} URL is not absolute");
+                Assert.Equal("https", uri.Scheme);
+            }
         }
     }
 
@@ -102,11 +89,14 @@ public class CatalogManifestTests
     public void Every_GitHub_source_is_well_formed()
     {
         var apps = CatalogFixture.AllApps(CatalogFixture.Load());
-        foreach (var app in apps.Where(a => a.GitHub is not null))
+        foreach (var app in apps)
         {
-            Assert.Matches("^[^/]+/[^/]+$", app.GitHub!.Repo);
-            Assert.False(string.IsNullOrWhiteSpace(app.GitHub.AssetPattern));
-            _ = new Regex(app.GitHub.AssetPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            foreach (var gh in app.EffectiveSources.Select(s => s.GitHub).Where(g => g is not null))
+            {
+                Assert.Matches("^[^/]+/[^/]+$", gh!.Repo);
+                Assert.False(string.IsNullOrWhiteSpace(gh.AssetPattern));
+                _ = new Regex(gh.AssetPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            }
         }
     }
 
