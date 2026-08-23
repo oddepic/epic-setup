@@ -41,7 +41,7 @@ public class CatalogServiceTests
             var (catalog, source) = service.LoadSync();
 
             Assert.Equal(CatalogService.SourceKind.Embedded, source);
-            Assert.Equal(48, CatalogFixture.AllApps(catalog).Count);
+            Assert.Equal(46, CatalogFixture.AllApps(catalog).Count);
         }
         finally
         {
@@ -63,7 +63,7 @@ public class CatalogServiceTests
             var (catalog, source) = service.LoadSync();
 
             Assert.Equal(CatalogService.SourceKind.Remote, source);
-            Assert.Equal(48, CatalogFixture.AllApps(catalog).Count);
+            Assert.Equal(46, CatalogFixture.AllApps(catalog).Count);
         }
         finally
         {

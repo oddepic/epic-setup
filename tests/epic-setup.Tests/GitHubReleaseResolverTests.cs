@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using EpicSetup.Models;
 using EpicSetup.Services;
 using Xunit;
 
@@ -41,24 +42,26 @@ public class GitHubReleaseResolverTests
     public async Task Every_GitHub_entry_resolves_exactly_one_asset()
     {
         var catalog = CatalogFixture.Load();
-        var githubApps = CatalogFixture.AllApps(catalog)
-            .Where(a => a.GitHub is not null)
+        var githubSources = CatalogFixture.AllApps(catalog)
+            .SelectMany(a => a.EffectiveSources, (a, s) => (AppId: a.Id, Source: s))
+            .Where(x => x.Source.Kind == AppSourceKind.GitHub)
             .ToList();
 
-        Assert.Equal(17, githubApps.Count);
+        Assert.Equal(17, githubSources.Count);
 
-        foreach (var app in githubApps)
+        foreach (var (appId, source) in githubSources)
         {
-            var assetName = PickAssetName(app.Id);
-            var handler = new StaticHandler(BuildReleaseJson(app.GitHub!.Repo, assetName,
+            var gh = source.GitHub!;
+            var assetName = PickAssetName(appId);
+            var handler = new StaticHandler(BuildReleaseJson(gh.Repo, assetName,
                 assetName + ".asc", "some-other-platform.exe", assetName + ".pdb"));
             using var http = new HttpClient(handler);
             var resolver = new GitHubReleaseResolver(http);
 
-            var asset = await resolver.ResolveAsync(app.GitHub.Repo, app.GitHub.AssetPattern, false, CancellationToken.None);
+            var asset = await resolver.ResolveAsync(gh.Repo, gh.AssetPattern, false, CancellationToken.None);
 
             Assert.Equal(assetName, asset.Name);
-            Assert.StartsWith($"https://api.github.com/repos/{app.GitHub.Repo}/releases/latest", handler.LastRequestUrl!);
+            Assert.StartsWith($"https://api.github.com/repos/{gh.Repo}/releases/latest", handler.LastRequestUrl!);
         }
     }
 

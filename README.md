@@ -41,11 +41,12 @@ tools/
 
 ## Catalog
 
-The catalog currently contains 48 apps organized into Apps and Games tabs.
-Edit [`catalog.json`](./catalog.json) to add or update entries. Apps can use a
-static vendor URL or a GitHub release asset, and support installer types such
-as MSI, NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, and script-based
-installers.
+The catalog currently contains 46 apps organized into Apps and Games tabs.
+Edit [`catalog.json`](./catalog.json) to add or update entries. Apps declare an ordered `sources` list. Package manager sources (winget)
+come first where a verified package ID exists, with a static vendor URL or
+GitHub release asset as fallback. Downloaded artifacts support installer
+types such as MSI, NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, and
+script-based installs.
 
 At startup, the application loads the catalog from the remote GitHub copy,
 then falls back to a local cache and finally to the catalog embedded in the
