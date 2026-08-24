@@ -20,6 +20,12 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<TabVm> Tabs { get; } = new();
     public ObservableCollection<CategoryVm> Categories { get; } = new();
     public ObservableCollection<AppEntryVm> ReviewItems { get; } = new();
+    public ObservableCollection<string> LogLines { get; } = new();
+
+    [ObservableProperty] private bool _detailsOpen;
+
+    [RelayCommand]
+    private void ToggleDetails() => DetailsOpen = !DetailsOpen;
 
     public bool SelectionEnabled => !IsInstalling && !IsReviewing;
 
@@ -57,6 +63,25 @@ public partial class MainViewModel : ObservableObject
 
     public string DownloadPercentText => $"{(int)Math.Round(DownloadProgress * 100)}%";
 
+    // Install stage header, Hermes-setup style.
+    public string StageTitle => "Setting up your apps";
+
+    public int DoneSteps => ReviewItems.Count(a => a.IsDone);
+    public string StepsCounterLabel => $"{DoneSteps} of {ReviewItems.Count} steps";
+    public string StepsPercentLabel => ReviewItems.Count == 0 ? "0%" : $"{(int)Math.Round(DoneSteps * 100.0 / ReviewItems.Count)}%";
+    public double OverallStepsFraction => ReviewItems.Count == 0 ? 0 : (double)DoneSteps / ReviewItems.Count;
+
+    private void NotifyStageHeader()
+    {
+        OnPropertyChanged(nameof(DoneSteps));
+        OnPropertyChanged(nameof(StepsCounterLabel));
+        OnPropertyChanged(nameof(StepsPercentLabel));
+        OnPropertyChanged(nameof(OverallStepsFraction));
+    }
+
+    // Full log text for the details drawer.
+    public string LogText => string.Join("\n", LogLines);
+
     public string ContinueLabel => $"Continue ({SelectedCount}/{TotalCount})";
 
     public MainViewModel() : this(new CatalogService(), new IconService(), new InstallEngine()) { }
@@ -66,6 +91,7 @@ public partial class MainViewModel : ObservableObject
         _catalogService = catalogService;
         _iconService = iconService;
         _engine = engine;
+        LogLines.CollectionChanged += (_, _) => OnPropertyChanged(nameof(LogText));
         _ = LoadAsync();
     }
 
@@ -225,24 +251,79 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+#if DEBUG
+    // Debug-only rehearsal of the install stage: drives the same status
+    // pipeline as InstallAsync without touching the real engine, so the
+    // step-list UI can be exercised safely (bound to F12 in the window).
+    [RelayCommand]
+    private async Task FakeInstallAsync()
+    {
+        var queue = ReviewItems.ToList();
+        if (queue.Count == 0) return;
+
+        IsInstalling = true;
+        OverallProgress = 0;
+        StatusText = "[fake] installing";
+        var rand = new Random();
+
+        foreach (var vm in queue)
+        {
+            AppendLog($"[fake] enter {vm.Id}");
+            foreach (var f in new[] { 0.15, 0.4, 0.65, 0.9 })
+            {
+                vm.SetStatus(AppStatus.Downloading, $"Downloading {f:P0} [fake]");
+                DownloadProgress = f;
+                await Task.Delay(rand.Next(450, 750));
+            }
+            vm.SetStatus(AppStatus.Installing, "Installing [fake]");
+            await Task.Delay(rand.Next(600, 900));
+
+            if (rand.Next(10) == 0)
+                vm.SetStatus(AppStatus.Failed, "Installer exited 1622: [fake failure]");
+            else
+                vm.SetStatus(AppStatus.Succeeded, "Installed [fake]");
+
+            AppendLog($"[fake] exit {vm.Id} -> {vm.Status}");
+            DownloadProgress = 0;
+            NotifyStageHeader();
+
+            // Hold mid-stage so the UI can be inspected/screenshotted safely.
+            if (ReferenceEquals(vm, queue[0]) && queue.Count > 1)
+            {
+                StatusText = "[fake] hold-v3";
+                AppendLog("[fake] hold enter");
+                await Task.Delay(90000);
+                AppendLog("[fake] hold exit");
+                StatusText = "[fake] installing";
+            }
+        }
+
+        StatusText = "[fake] done.";
+        IsInstalling = false;
+        NotifyInstalledAppsTooltip();
+    }
+#endif
+
     private void OnProgress(InstallUpdate u)
     {
+        // Per-chunk download ticks carry no log-worthy text; only status
+        // transitions and diagnostics go to the log feed.
         if (!string.IsNullOrWhiteSpace(u.Diagnostic))
             AppendBackendLog(u.Diagnostic);
 
         if (!string.IsNullOrEmpty(u.AppId))
         {
             var appVm = _allApps.FirstOrDefault(a => a.Id == u.AppId);
-            if (appVm != null)
+            if (appVm != null && u.Status != AppStatus.Downloading)
             {
                 appVm.SetStatus(u.Status, Label(u.Status, u.Message));
+                NotifyStageHeader();
                 NotifyInstalledAppsTooltip();
             }
-            AppendLog($"{u.AppId} | {u.Status} | {u.Message}");
         }
         else if (!string.IsNullOrEmpty(u.Message))
         {
-            AppendLog($"--- {u.Status} | {u.Message}");
+            AppendBackendLog($"{u.Status} | {u.Message}");
         }
         if (u.Status == AppStatus.Downloading)
             DownloadProgress = u.DownloadFraction;
@@ -261,6 +342,10 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
+            // Live UI feed first: disk errors below must never break the drawer.
+            LogLines.Add(line);
+            if (LogLines.Count > 4000) LogLines.RemoveAt(0);
+
             // Dedupe consecutive identical lines to keep the log small.
             if (line == _lastLoggedLine) return;
             _lastLoggedLine = line;
@@ -328,7 +413,23 @@ public partial class MainViewModel : ObservableObject
     {
         InstallCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectionEnabled));
+        NotifyStageHeader();
+
+        // Live per-step elapsed seconds tick while the stage runs.
+        if (value)
+        {
+            foreach (var a in ReviewItems) a.ResetStepClock();   // measure this run afresh
+            _elapsedTimer ??= new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+            _elapsedTimer.Tick += (_, _) => { foreach (var a in ReviewItems) a.TickElapsed(); };
+            _elapsedTimer.Start();
+        }
+        else
+        {
+            _elapsedTimer?.Stop();
+        }
     }
+
+    private System.Windows.Threading.DispatcherTimer? _elapsedTimer;
 
     [RelayCommand]
     private void SelectAll()

@@ -2,30 +2,36 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Palette -->
-    <Color x:Key="BgColor">#0E0E14</Color>
-    <Color x:Key="SurfaceColor">#16161D</Color>
-    <Color x:Key="SurfaceAltColor">#1E1E28</Color>
-    <Color x:Key="SurfaceHoverColor">#26262F</Color>
-    <Color x:Key="BorderColor">#2A2A36</Color>
-    <Color x:Key="TextPrimaryColor">#EDEDF3</Color>
-    <Color x:Key="TextMutedColor">#8E8E9A</Color>
-    <Color x:Key="AccentColor">#7C9CFF</Color>
-    <Color x:Key="AccentHoverColor">#94AEFF</Color>
-    <Color x:Key="OnAccentColor">#0B0B12</Color>
-    <Color x:Key="SuccessColor">#4ADE80</Color>
-    <Color x:Key="WarnColor">#F5C460</Color>
-    <Color x:Key="ErrorColor">#F87171</Color>
-    <Color x:Key="InfoColor">#60A5FA</Color>
+    <Color x:Key="BgColor">#0D0B12</Color>
+    <Color x:Key="SurfaceColor">#12101A</Color>
+    <Color x:Key="SurfaceAltColor">#17141F</Color>
+    <Color x:Key="SurfaceHoverColor">#211D2C</Color>
+    <Color x:Key="BorderColor">#221E2E</Color>
+    <Color x:Key="TextPrimaryColor">#F4F1F7</Color>
+    <Color x:Key="TextMutedColor">#8C8598</Color>
+    <Color x:Key="AccentColor">#BFA4F5</Color>
+    <Color x:Key="AccentHoverColor">#D0B8FF</Color>
+    <Color x:Key="OnAccentColor">#14111D</Color>
+    <Color x:Key="SuccessColor">#67C59A</Color>
+    <Color x:Key="WarnColor">#D8B36A</Color>
+    <Color x:Key="ErrorColor">#D47787</Color>
+    <Color x:Key="InfoColor">#7EA9D8</Color>
 
     <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
     <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}" />
-    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <!-- ~7% white, matches the web border token over dark surfaces -->
+    <SolidColorBrush x:Key="BorderBrush" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="#1CFFFFFF" />
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
     <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+    <!-- #AAA3B5 from the web scheme (text-secondary) -->
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#AAA3B5" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+    <!-- ~14% accent tint, matches the web accent-soft token -->
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#248B6CCB" />
     <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="WarnBrush" Color="{StaticResource WarnColor}" />
@@ -107,7 +113,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            CornerRadius="5" Padding="{TemplateBinding Padding}">
                         <ContentPresenter Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           VerticalAlignment="Center" HorizontalAlignment="Center" />
@@ -137,12 +143,12 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            CornerRadius="5" Padding="{TemplateBinding Padding}">
                         <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
@@ -169,7 +175,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            CornerRadius="5" Padding="{TemplateBinding Padding}">
                         <ContentPresenter Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -178,10 +184,10 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoftBrush}" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -205,8 +211,8 @@
                             <Border x:Name="Box"
                                     Width="16" Height="16"
                                     CornerRadius="4"
-                                    Background="#1A1A24"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                                    Background="#17141F"
+                                    BorderBrush="{StaticResource BorderStrongBrush}"
                                     BorderThickness="1.5" />
                             <!-- checkmark and dash overlays -->
                             <Grid Width="16" Height="16" x:Name="Overlays">
@@ -263,7 +269,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Width="22" Height="22" CornerRadius="11"
+                    <Border x:Name="Bd" Width="22" Height="22" CornerRadius="5"
                             Background="{TemplateBinding Background}">
                         <Path x:Name="Glyph" Width="8" Height="8" Stretch="Uniform"
                               Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
@@ -271,7 +277,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
                             <Setter TargetName="Glyph" Property="Stroke" Value="{StaticResource ErrorBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
@@ -316,7 +322,7 @@
     <!-- App row container -->
     <Style x:Key="AppRow" TargetType="Border">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="5" />
         <Setter Property="Margin" Value="0,1" />
         <Setter Property="Padding" Value="4,3" />
     </Style>
@@ -374,37 +380,23 @@
         </Setter>
     </Style>
 
-    <!-- ScrollViewer / ScrollBar -->
-    <Style TargetType="ScrollViewer">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ScrollViewer">
-                    <Grid>
-                        <ScrollContentPresenter />
-                        <ScrollBar x:Name="PART_VerticalScrollBar"
-                                   HorizontalAlignment="Right" Width="8"
-                                   Minimum="0" Maximum="{TemplateBinding ScrollableHeight}"
-                                   ViewportSize="{TemplateBinding ViewportHeight}"
-                                   Value="{TemplateBinding VerticalOffset}"
-                                   SmallChange="16" LargeChange="120" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+    <!-- ScrollViewer / ScrollBar: stock viewer template, slim implicit bar -->
     <Style TargetType="ScrollBar">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="6" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MaxWidth" Value="6" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="3">
                         <Track x:Name="PART_Track" IsDirectionReversed="True">
                             <Track.Thumb>
                                 <Thumb>
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border Background="#3A3A48" CornerRadius="4" Margin="1" />
+                                            <Border Background="#2AAAA3B5" CornerRadius="3" Margin="0" />
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
