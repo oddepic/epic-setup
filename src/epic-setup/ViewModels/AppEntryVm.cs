@@ -72,7 +72,39 @@ public partial class AppEntryVm : ObservableObject
 
     public void SetStatus(AppStatus status, string? text)
     {
+        // Stage clock starts the first time an app enters a working state and
+        // freezes on its verdict. ResetStepClock clears it per stage/run.
+        var enteringWork = status is AppStatus.Downloading or AppStatus.Verifying or AppStatus.Installing;
+        if (enteringWork && _stepStartedAt is null)
+            _stepStartedAt = DateTime.Now;
         Status = status;
         StatusText = text;
+        if (IsDone) UpdateElapsed();
+    }
+
+    // Live elapsed label for the install stage ("12.4s", "1m 07s"), Hermes-style.
+    [ObservableProperty] private string _elapsedLabel = "";
+
+    private DateTime? _stepStartedAt;
+
+    /// <summary>Clears the step clock so the next stage measures this app afresh.</summary>
+    public void ResetStepClock()
+    {
+        _stepStartedAt = null;
+        ElapsedLabel = "";
+    }
+
+    private void UpdateElapsed()
+    {
+        if (_stepStartedAt is not { } start) return;
+        var t = DateTime.Now - start;
+        // Tenths while counting up ("12.4s"); whole seconds once it passes a minute.
+        ElapsedLabel = t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes}m {t.Seconds:00}s" : $"{t.TotalSeconds:0.0}s";
+    }
+
+    // Called by the stage tick timer; only the active row updates.
+    public void TickElapsed()
+    {
+        if (IsProcessing) UpdateElapsed();
     }
 }
