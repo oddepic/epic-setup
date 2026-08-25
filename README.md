@@ -16,19 +16,19 @@ banners, no winget dependency for the app itself.
 
 ## Key features
 
-- One-click batch installs with silent switches per installer type (MSI,
+* One-click batch installs with silent switches per installer type (MSI,
   NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, script)
-- Multi-backend acquisition: entries declare an ordered `sources` chain
+* Multi-backend acquisition: entries declare an ordered `sources` chain
   (`winget` → `github` → `url`) and the engine falls back automatically when a
   source fails
-- winget integration without winget dependency: package-manager installs are
+* winget integration without winget dependency: package-manager installs are
   delegated through `winget --exact --silent`, but the app never requires it;
   missing winget just means the fallback channel takes over
-- Live fallback proof: download failures and non-zero installer exits move to
+* Live fallback proof: download failures and non-zero installer exits move to
   the next declared source; the log shows which backend served each app
-- 46-app curated catalog across Apps and Games tabs with icons, sizes, and
+* 46-app curated catalog across Apps and Games tabs with icons, sizes, and
   per-app timeouts
-- Self-contained single-file exe, no runtime install needed
+* Self-contained single-file exe, no runtime install needed
 
 ## Preview
 
@@ -43,8 +43,8 @@ banners, no winget dependency for the app itself.
 
 Requirements:
 
-- Windows 10/11 x64
-- .NET 10 SDK (user-local install works fine)
+* Windows 10/11 x64
+* .NET 10 SDK (user-local install works fine)
 
 Clone and set up:
 
@@ -127,23 +127,23 @@ Logs land in `%LOCALAPPDATA%\epic-setup\install.log` plus per-installer logs in
 
 ## Roadmap
 
-- [x] Per-entry multi-backend acquisition with automatic fallback
-- [x] winget CLI backend, IDs verified live against the catalog
-- [ ] Publish tracking issue + migrate remaining edge-case entries (avast)
-- [ ] scoop backend (portable/CLI tool coverage)
-- [ ] chocolatey backend (opt-in)
-- [ ] Bootstrap flow for missing package managers, gated behind explicit user consent
-- [ ] Security rework: artifact trust decisions layered on top of working downloads
+* [x] Per-entry multi-backend acquisition with automatic fallback
+* [x] winget CLI backend, IDs verified live against the catalog
+* [ ] Publish tracking issue + migrate remaining edge-case entries (avast)
+* [ ] scoop backend (portable/CLI tool coverage)
+* [ ] chocolatey backend (opt-in)
+* [ ] Bootstrap flow for missing package managers, gated behind explicit user consent
+* [ ] Security rework: artifact trust decisions layered on top of working downloads
 
 ## Contributing
 
 Issues and PRs both welcome.
 
-- Bugs and requests: open a GitHub issue with the install log attached
+* Bugs and requests: open a GitHub issue with the install log attached
   (`%LOCALAPPDATA%\epic-setup\install.log`)
-- Code: branch from `main` using `<type>/<description>` names (`feat/…`,
+* Code: branch from `main` using `<type>/<description>` names (`feat/…`,
   `fix/…`, `chore/…`), keep PRs focused, and make sure `dotnet test` passes
-- Catalog additions: follow the `sources` schema above and include evidence the
+* Catalog additions: follow the `sources` schema above and include evidence the
   download URL or package ID is correct
 
 ## 📄 License
