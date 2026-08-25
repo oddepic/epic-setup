@@ -303,9 +303,7 @@ public sealed class InstallEngine
             return AttemptOutcome.Committed;
         }
         var why = WingetResult.Explain(result.ExitCode);
-        var tail = result.Output.Length > 400 ? result.Output[^400..].Trim() : result.Output.Trim();
-        ReportDiagnostic(progress,
-            $"{app.Id}: {plan.BackendTag} failed: {why}. {(tail.Length > 0 ? $"Output: {tail}" : "")}",
+        ReportDiagnostic(progress, $"{app.Id}: {plan.BackendTag} failed: {why}.",
             completed, total);
         return AttemptOutcome.RetryNextSource;
     }

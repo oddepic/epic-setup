@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 using EpicSetup.Models;
 
@@ -198,7 +199,9 @@ public sealed class SilentInstaller
         };
         foreach (var a in arguments) psi.ArgumentList.Add(a);
 
-        var shownArgs = string.Join(' ', arguments);
+        // Log the command shape, not the full argv: users care what ran and
+        // against which package, not a wall of stability flags.
+        var shownArgs = string.Join(' ', arguments.Where(a => !a.StartsWith('-')));
         Detail($"command: \"{executable}\" {shownArgs}");
         using var p = new Process { StartInfo = psi };
         try { p.Start(); }

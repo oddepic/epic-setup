@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- Palette -->
     <Color x:Key="BgColor">#0D0B12</Color>
@@ -396,11 +397,20 @@
         <Setter Property="Width" Value="6" />
         <Setter Property="MinWidth" Value="0" />
         <Setter Property="MaxWidth" Value="6" />
+        <Setter Property="Height" Value="6" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="MaxHeight" Value="6" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                    <Grid Background="{TemplateBinding Background}">
                         <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                            </Track.IncreaseRepeatButton>
                             <Track.Thumb>
                                 <Thumb>
                                     <Thumb.Template>
@@ -411,10 +421,19 @@
                                 </Thumb>
                             </Track.Thumb>
                         </Track>
-                    </Border>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="MaxWidth" Value="{x:Static sys:Double.MaxValue}" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Height" Value="6" />
+                <Setter Property="MaxHeight" Value="6" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>
