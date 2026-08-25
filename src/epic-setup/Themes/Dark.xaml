@@ -381,6 +381,15 @@
     </Style>
 
     <!-- ScrollViewer / ScrollBar: stock viewer template, slim implicit bar -->
+    <!-- Read-only log TextBox: transparent, no focus chrome -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="SelectionBrush" Value="{StaticResource AccentSoftBrush}" />
+        <Setter Property="CaretBrush" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
     <Style TargetType="ScrollBar">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Specialized;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using EpicSetup.ViewModels;
 
@@ -15,14 +16,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContextChanged += (_, _) => WireViewModel();
         Loaded += (_, _) => WireViewModel();
-        PreviewKeyDown += (_, e) =>
-        {
-            if (e.Key == Key.Escape && DataContext is MainViewModel vm && vm.DetailsOpen)
-            {
-                vm.DetailsOpen = false;
-                e.Handled = true;
-            }
-        };
+        // Note: the details panel is never force-closed - not on install end,
+        // not by Escape. Reading the log is the user's call.
 
 #if DEBUG
         // Rehearse the install stage without touching the real engine.
@@ -40,11 +35,22 @@ public partial class MainWindow : Window
         vm.ReviewItems.CollectionChanged += (_, _) => UpdateQueueMeta(vm);
         vm.LogLines.CollectionChanged += (_, _) =>
         {
-            if (vm.DetailsOpen) DetailsScroller.ScrollToEnd();
+            if (vm.DetailsOpen && _logFollowTail) DetailsBox.ScrollToEnd();
         };
         vm.PropertyChanged += (_, e) => OnVmPropertyChanged(vm, e.PropertyName);
 
+        // Follow the tail while the user is at the bottom; pause when they
+        // scroll up to read, resume when they return to the bottom.
+        DetailsBox.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(LogScrolled));
         UpdateQueueMeta(vm);
+    }
+
+    private bool _logFollowTail = true;
+
+    private void LogScrolled(object sender, ScrollChangedEventArgs e)
+    {
+        var sv = DetailsBox;
+        _logFollowTail = sv.VerticalOffset + sv.ViewportHeight >= sv.ExtentHeight - 24;
     }
 
     // Queue header meta chip (estimated size) stays in sync with ReviewItems
@@ -65,7 +71,11 @@ public partial class MainWindow : Window
         {
             DetailsChevron.Text = vm.DetailsOpen ? "▾" : "▸";
             DetailsToggleLabel.Text = vm.DetailsOpen ? "hide details" : "show details";
-            if (vm.DetailsOpen) DetailsScroller.ScrollToEnd();
+            if (vm.DetailsOpen)
+            {
+                _logFollowTail = true;
+                DetailsBox.ScrollToEnd();
+            }
         }
         else if (prop == nameof(MainViewModel.IsInstalling))
         {

@@ -238,7 +238,21 @@ public sealed class SilentInstaller
         catch { }
         if (p.ExitCode != 0 && output.Length > 0)
         {
-            var tail = output.Length > 2000 ? output[^2000..] : output;
+            // A help dump means the CLI rejected our arguments; keep just its
+            // complaint line instead of pages of flag documentation.
+            var tail = output;
+            var looksLikeHelp = tail.Contains("--help") || tail.Contains("Usage:") ||
+                                (tail.Split('\n').Length > 12 && tail.Contains("More help can be found at"));
+            if (looksLikeHelp)
+            {
+                var first = tail.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                                .FirstOrDefault(l => !l.TrimStart().StartsWith('-')) ?? "";
+                tail = $"(CLI printed its help text - arguments not recognised) {first.Trim()}";
+            }
+            else if (tail.Length > 2000)
+            {
+                tail = tail[^2000..];
+            }
             Detail($"command output tail: {tail}");
         }
 
