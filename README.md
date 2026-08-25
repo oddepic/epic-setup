@@ -14,23 +14,23 @@ available channel: the winget CLI where a verified package ID exists, or a
 direct vendor/GitHub download as fallback. Silent switches, no telemetry, no
 banners, no winget dependency for the app itself.
 
-## ✨ Key features
+## Key features
 
-- 🎯 One-click batch installs with silent switches per installer type (MSI,
+- One-click batch installs with silent switches per installer type (MSI,
   NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, script)
-- 📦 Multi-backend acquisition: entries declare an ordered `sources` chain
+- Multi-backend acquisition: entries declare an ordered `sources` chain
   (`winget` → `github` → `url`) and the engine falls back automatically when a
   source fails
-- ⚡ winget integration without winget dependency: package-manager installs are
+- winget integration without winget dependency: package-manager installs are
   delegated through `winget --exact --silent`, but the app never requires it;
   missing winget just means the fallback channel takes over
-- 🔁 Live fallback proof: download failures and non-zero installer exits move to
+- Live fallback proof: download failures and non-zero installer exits move to
   the next declared source; the log shows which backend served each app
-- 🧰 46-app curated catalog across Apps and Games tabs with icons, sizes, and
+- 46-app curated catalog across Apps and Games tabs with icons, sizes, and
   per-app timeouts
-- 🪶 Self-contained single-file exe, no runtime install needed
+- Self-contained single-file exe, no runtime install needed
 
-## 🖼️ Preview
+## Preview
 
 > Screenshot placeholder: main window with category tabs, app grid, and backend
 > log pane. Replace with a GIF of a batch install when available.
@@ -39,7 +39,7 @@ banners, no winget dependency for the app itself.
 [ screenshot coming soon ]
 ```
 
-## 📦 Prerequisites & installation
+## Prerequisites & installation
 
 Requirements:
 
@@ -74,7 +74,7 @@ dotnet publish src/epic-setup/epic-setup.csproj -c Release -r win-x64 --self-con
   -p:SatelliteResourceLanguages=en -o dist
 ```
 
-## 🚀 Usage guide
+## Usage guide
 
 Run the built exe with the catalog embedded at compile time (recommended while
 developing; avoids pulling a stale remote catalog):
@@ -125,7 +125,7 @@ manager's own silent flags.
 Logs land in `%LOCALAPPDATA%\epic-setup\install.log` plus per-installer logs in
 `%LOCALAPPDATA%\epic-setup\logs\`.
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] Per-entry multi-backend acquisition with automatic fallback
 - [x] winget CLI backend, IDs verified live against the catalog
@@ -135,7 +135,7 @@ Logs land in `%LOCALAPPDATA%\epic-setup\install.log` plus per-installer logs in
 - [ ] Bootstrap flow for missing package managers, gated behind explicit user consent
 - [ ] Security rework: artifact trust decisions layered on top of working downloads
 
-## 🤝 Contributing
+## Contributing
 
 Issues and PRs both welcome.
 
