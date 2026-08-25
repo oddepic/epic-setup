@@ -458,8 +458,8 @@
                                      IsReadOnly="True"
                                      IsReadOnlyCaretVisible="False"
                                      TextWrapping="NoWrap"
-                                     VerticalScrollBarVisibility="Visible"
-                                     HorizontalScrollBarVisibility="Visible"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
                                      VerticalContentAlignment="Top"
                                      Padding="2,0,4,6"/>
                         </Grid>
