@@ -224,7 +224,10 @@ public sealed class InstallEngine
                 if (launchResult.ExitCode == 0)
                 {
                     completed++; _succeeded++;
-                    Report(progress, app.Id, AppStatus.Skipped, "Launched", completed, total);
+                    Report(progress, app.Id, AppStatus.Succeeded,
+                        "Launcher started - finish its setup", completed, total,
+                        $"{app.Id}: bootstrapper exited immediately; it keeps downloading in the background. " +
+                        "Marked installed; complete any in-app setup by hand.");
                     return AttemptOutcome.Committed;
                 }
                 return RecordFailure($"launch failed with code {launchResult.ExitCode}");
@@ -270,21 +273,40 @@ public sealed class InstallEngine
 
         var diagnostics = new Progress<string>(detail =>
             ReportDiagnostic(progress, $"{app.Id}: {detail}", completed, total));
+
+        // Older winget builds reject newer flags with INVALID_CL_ARGUMENTS;
+        // retry once without them before giving up on the backend.
         var result = await _runner.RunCommandAsync(plan.Executable, plan.Arguments,
             plan.TimeoutSeconds, CancellationToken.None, diagnostics);
+        if (result.ExitCode == WingetResult.InvalidCommandLine)
+        {
+            ReportDiagnostic(progress,
+                $"{app.Id}: winget rejected modern flags ({WingetResult.Explain(result.ExitCode)}); retrying without them.",
+                completed, total);
+            result = await _runner.RunCommandAsync(plan.Executable, WingetResult.StripModernArgs(plan.Arguments),
+                plan.TimeoutSeconds, CancellationToken.None, diagnostics);
+        }
 
         if (result.TimedOut)
         {
             ReportDiagnostic(progress, $"{app.Id}: {plan.BackendTag} timed out.", completed, total);
             return AttemptOutcome.Abort;
         }
-        if (result.ExitCode is 0 or 3010 or 1641)
+        if (WingetResult.IsNoOpSuccess(result.ExitCode))
         {
             CommitSuccess(progress, app,
-                $"Installed (via {plan.BackendTag})", ref completed, total,
+                result.ExitCode == WingetResult.UpdateNotApplicable
+                    ? "Already installed"
+                    : $"Installed (via {plan.BackendTag})",
+                ref completed, total,
                 $"{app.Id}: {plan.Description} exited with code {result.ExitCode}; success.");
             return AttemptOutcome.Committed;
         }
+        var why = WingetResult.Explain(result.ExitCode);
+        var tail = result.Output.Length > 400 ? result.Output[^400..].Trim() : result.Output.Trim();
+        ReportDiagnostic(progress,
+            $"{app.Id}: {plan.BackendTag} failed: {why}. {(tail.Length > 0 ? $"Output: {tail}" : "")}",
+            completed, total);
         return AttemptOutcome.RetryNextSource;
     }
 
@@ -299,20 +321,21 @@ public sealed class InstallEngine
         SilentInstaller.RunResult result, ref int completed, int total)
     {
         completed++;
-        if (result.TimedOut)
-        {
-            _failed++;
-            var mins = (app.InstallTimeoutSeconds ?? SilentInstaller.DefaultInstallTimeoutSeconds) / 60;
-            Report(progress, app.Id, AppStatus.Failed,
-                $"Installer did not finish within {mins} min and was terminated.", completed, total,
-                $"{app.Id}: installer timed out after {mins} minute(s); process tree terminated.");
-        }
-        else if (result.ExitCode is 0 or 3010 or 1641)
+        if (result.ExitCode is 0 or 3010 or 1641)
         {
             _succeeded++;
             Report(progress, app.Id, AppStatus.Succeeded,
                 result.ExitCode is 3010 or 1641 ? "Installed - restart required" : "Installed",
                 completed, total, $"{app.Id}: installer exited with code {result.ExitCode}; success.");
+        }
+        else if (result.TimedOut)
+        {
+            _failed++;
+            var mins = (app.InstallTimeoutSeconds ?? SilentInstaller.DefaultInstallTimeoutSeconds) / 60;
+            Report(progress, app.Id, AppStatus.Failed,
+                $"Still installing after {mins} min - we stopped waiting", completed, total,
+                $"{app.Id}: installer timed out after {mins} minute(s); process tree terminated. " +
+                "The installer may have kept running or finished later; check the app before retrying.");
         }
         else
         {

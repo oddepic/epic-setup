@@ -23,6 +23,8 @@ public sealed class SilentInstaller
     {
         public int ExitCode { get; init; }
         public bool TimedOut { get; init; }
+        /// <summary>Combined stdout+stderr tail (last ~2000 chars) when captured.</summary>
+        public string Output { get; init; } = "";
     }
 
     public async Task<RunResult> RunAsync(AppEntry app, string localPath, CancellationToken ct,
@@ -224,8 +226,24 @@ public sealed class SilentInstaller
         }
         try { await outTask; } catch { }
         try { await errTask; } catch { }
+
+        // Keep a bounded transcript so failures explain themselves in the log.
+        string output = "";
+        try
+        {
+            var stdout = outTask.Status == TaskStatus.RanToCompletion ? outTask.Result : "";
+            var stderr = errTask.Status == TaskStatus.RanToCompletion ? errTask.Result : "";
+            output = (stdout + "\n" + stderr).Trim();
+        }
+        catch { }
+        if (p.ExitCode != 0 && output.Length > 0)
+        {
+            var tail = output.Length > 2000 ? output[^2000..] : output;
+            Detail($"command output tail: {tail}");
+        }
+
         Detail($"process result: exitCode={p.ExitCode}.");
-        return new RunResult { ExitCode = p.ExitCode };
+        return new RunResult { ExitCode = p.ExitCode, Output = output };
     }
 
     private static async Task<RunResult> RunScriptAsync(string command, int timeoutSeconds, CancellationToken ct)
