@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- Palette -->
     <Color x:Key="BgColor">#0D0B12</Color>
@@ -380,7 +381,7 @@
         </Setter>
     </Style>
 
-    <!-- ScrollViewer / ScrollBar: stock viewer template, slim implicit bar -->
+    <!-- Slim scrollbars, correct per orientation -->
     <Style TargetType="ScrollBar">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -389,23 +390,109 @@
         <Setter Property="MaxWidth" Value="6" />
         <Setter Property="Template">
             <Setter.Value>
+                <!-- Vertical: reversed so up = start -->
                 <ControlTemplate TargetType="ScrollBar">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                    <Grid Background="{TemplateBinding Background}">
                         <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                            </Track.IncreaseRepeatButton>
                             <Track.Thumb>
                                 <Thumb>
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border Background="#2AAAA3B5" CornerRadius="3" Margin="0" />
+                                            <Border Background="#30AAA3B5" CornerRadius="3" />
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
                             </Track.Thumb>
                         </Track>
-                    </Border>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="MaxWidth" Value="{x:Static sys:Double.MaxValue}" />
+                <Setter Property="Height" Value="6" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="MaxHeight" Value="6" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <!-- Horizontal: NOT reversed -->
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="{TemplateBinding Background}">
+                                <Track x:Name="PART_Track" IsDirectionReversed="False">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageLeftCommand" Opacity="0" Focusable="False"/>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageRightCommand" Opacity="0" Focusable="False"/>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border Background="#30AAA3B5" CornerRadius="3" />
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ScrollViewer: stock wiring plus a TRANSPARENT corner cell where the
+         two scrollbars meet (kills the white square) -->
+    <Style TargetType="ScrollViewer">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollViewer">
+                    <Grid Background="{TemplateBinding Background}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ScrollContentPresenter Grid.Column="0" Grid.Row="0" />
+                        <ScrollBar Name="PART_VerticalScrollBar" Grid.Column="1" Grid.Row="0"
+                                   Value="{TemplateBinding VerticalOffset}"
+                                   Maximum="{TemplateBinding ScrollableHeight}"
+                                   ViewportSize="{TemplateBinding ViewportHeight}"
+                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+                        <ScrollBar Name="PART_HorizontalScrollBar" Orientation="Horizontal"
+                                   Grid.Column="0" Grid.Row="1"
+                                   Value="{TemplateBinding HorizontalOffset}"
+                                   Maximum="{TemplateBinding ScrollableWidth}"
+                                   ViewportSize="{TemplateBinding ViewportWidth}"
+                                   Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
+                        <Rectangle Grid.Column="1" Grid.Row="1" Fill="Transparent" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Read-only log TextBox: surface-colored so reserved corners blend in -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="SelectionBrush" Value="{StaticResource AccentSoftBrush}" />
+        <Setter Property="CaretBrush" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
     </Style>
 
 </ResourceDictionary>

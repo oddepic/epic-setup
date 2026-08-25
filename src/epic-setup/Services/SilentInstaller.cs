@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 using EpicSetup.Models;
 
@@ -23,6 +24,8 @@ public sealed class SilentInstaller
     {
         public int ExitCode { get; init; }
         public bool TimedOut { get; init; }
+        /// <summary>Combined stdout+stderr tail (last ~2000 chars) when captured.</summary>
+        public string Output { get; init; } = "";
     }
 
     public async Task<RunResult> RunAsync(AppEntry app, string localPath, CancellationToken ct,
@@ -196,7 +199,9 @@ public sealed class SilentInstaller
         };
         foreach (var a in arguments) psi.ArgumentList.Add(a);
 
-        var shownArgs = string.Join(' ', arguments);
+        // Log the command shape, not the full argv: users care what ran and
+        // against which package, not a wall of stability flags.
+        var shownArgs = string.Join(' ', arguments.Where(a => !a.StartsWith('-')));
         Detail($"command: \"{executable}\" {shownArgs}");
         using var p = new Process { StartInfo = psi };
         try { p.Start(); }
@@ -224,8 +229,38 @@ public sealed class SilentInstaller
         }
         try { await outTask; } catch { }
         try { await errTask; } catch { }
+
+        // Keep a bounded transcript so failures explain themselves in the log.
+        string output = "";
+        try
+        {
+            var stdout = outTask.Status == TaskStatus.RanToCompletion ? outTask.Result : "";
+            var stderr = errTask.Status == TaskStatus.RanToCompletion ? errTask.Result : "";
+            output = (stdout + "\n" + stderr).Trim();
+        }
+        catch { }
+        if (p.ExitCode != 0 && output.Length > 0)
+        {
+            // A help dump means the CLI rejected our arguments; keep just its
+            // complaint line instead of pages of flag documentation.
+            var tail = output;
+            var looksLikeHelp = tail.Contains("--help") || tail.Contains("Usage:") ||
+                                (tail.Split('\n').Length > 12 && tail.Contains("More help can be found at"));
+            if (looksLikeHelp)
+            {
+                var first = tail.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                                .FirstOrDefault(l => !l.TrimStart().StartsWith('-')) ?? "";
+                tail = $"(CLI printed its help text - arguments not recognised) {first.Trim()}";
+            }
+            else if (tail.Length > 2000)
+            {
+                tail = tail[^2000..];
+            }
+            Detail($"command output tail: {tail}");
+        }
+
         Detail($"process result: exitCode={p.ExitCode}.");
-        return new RunResult { ExitCode = p.ExitCode };
+        return new RunResult { ExitCode = p.ExitCode, Output = output };
     }
 
     private static async Task<RunResult> RunScriptAsync(string command, int timeoutSeconds, CancellationToken ct)

@@ -813,7 +813,8 @@
                   "kind": "github",
                   "github": {
                     "repo": "obsidianmd/obsidian-releases",
-                    "asset": "^Obsidian-[0-9]+\\.[0-9]+\\.[0-9]+\\.exe$"
+                    "asset": "^Obsidian-[0-9]+\\.[0-9]+\\.[0-9]+\\.exe$",
+                    "useLatestPrerelease": true
                   }
                 }
               ]

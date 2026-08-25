@@ -245,6 +245,8 @@ public partial class MainViewModel : ObservableObject
         }
         finally
         {
+            // DetailsOpen is deliberately left untouched so the user can keep
+            // reading the log after the run ends.
             IsInstalling = false;
             InstallCommand.NotifyCanExecuteChanged();
             NotifyInstalledAppsTooltip();
@@ -366,8 +368,8 @@ public partial class MainViewModel : ObservableObject
     private void AppendBackendLog(string line)
     {
         if (string.IsNullOrWhiteSpace(line)) return;
-        BackendLogText = $"[{DateTime.Now:HH:mm:ss}] {line}";
-        AppendLog("backend | " + line);
+        BackendLogText = line;
+        AppendLog($"[{DateTime.Now:HH:mm:ss}] {line}");
     }
 
     private static string Label(AppStatus s, string? msg) => s switch

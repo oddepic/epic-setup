@@ -428,20 +428,12 @@
                         </ItemsControl>
                     </ScrollViewer>
 
-                    <!-- Live output panel; show/hide details collapses it -->
+                    <!-- Live output panel; show/hide details collapses it.
+                         Stays available after the run ends (DetailsOpen). -->
                     <Border Grid.Column="1" Width="450" Background="{StaticResource SurfaceBrush}"
                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="5" Margin="14,0,0,0">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Visibility" Value="{Binding IsInstalling, Converter={StaticResource BoolVis}}"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DetailsOpen}" Value="False">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
+                            CornerRadius="5" Margin="14,0,0,0"
+                            Visibility="{Binding DetailsOpen, Converter={StaticResource BoolVis}}">
                         <Grid Margin="14,10,10,10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -456,15 +448,20 @@
                                                Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
-                            <ScrollViewer x:Name="DetailsScroller" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                <TextBlock x:Name="DetailsBox"
-                                           Text="{Binding LogText, Mode=OneWay}"
-                                           FontFamily="{StaticResource JetBrainsMono}" FontSize="11"
-                                           Foreground="{StaticResource TextSecondaryBrush}"
-                                           Background="Transparent"
-                                           TextWrapping="NoWrap"
-                                           Padding="2,0,4,6"/>
-                            </ScrollViewer>
+                            <TextBox x:Name="DetailsBox"
+                                     Grid.Row="1"
+                                     Text="{Binding LogText, Mode=OneWay}"
+                                     FontFamily="{StaticResource JetBrainsMono}" FontSize="11"
+                                     Foreground="{StaticResource TextSecondaryBrush}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     IsReadOnly="True"
+                                     IsReadOnlyCaretVisible="False"
+                                     TextWrapping="NoWrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     VerticalContentAlignment="Top"
+                                     Padding="2,0,4,6"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -489,8 +486,7 @@
                     <Button Style="{StaticResource GhostButton}" Padding="12,7"
                             HorizontalAlignment="Left" VerticalAlignment="Center"
                             Command="{Binding ToggleDetailsCommand}"
-                            ToolTip="Full engine log (Esc or backdrop click closes)"
-                            Visibility="{Binding IsInstalling, Converter={StaticResource BoolVis}}">
+                            ToolTip="Full engine log - stays open after the run ends">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock x:Name="DetailsChevron" Text="&#x25B8;" FontFamily="{StaticResource JetBrainsMono}"
                                        FontSize="11" VerticalAlignment="Center"/>
