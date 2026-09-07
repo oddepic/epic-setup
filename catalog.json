@@ -912,16 +912,18 @@
             {
               "id": "devin-cli",
               "name": "Devin CLI",
-              "description": "Cognition coding agent for the terminal (script install; Desktop at devin.ai/download)",
+              "description": "Cognition coding agent for the terminal (binary installs silently; run devin setup to log in)",
               "size": 50,
               "installerType": "Script",
-              "silentArgs": "iex (irm https://static.devin.ai/cli/setup.ps1)",
+              "silentArgs": "$t = (irm https://static.devin.ai/cli/setup.ps1); if ($t -notmatch '(?m)^& \\$EntryExe setup\\s*$') { throw 'devin setup.ps1 changed shape, refusing to run blind' }; & ([scriptblock]::Create(($t -replace '(?m)^& \\$EntryExe setup\\s*$', '# stripped by epic-setup: run devin setup yourself to log in')))",
               "installTimeoutSeconds": 180,
               "homepage": "https://devin.ai/download",
               "needsReview": true,
               "tags": [
                 "cli"
-              ]
+              ],
+              "needsUserSetup": true,
+              "runAsUser": true
             }
           ]
         },

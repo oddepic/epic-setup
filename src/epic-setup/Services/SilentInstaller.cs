@@ -60,7 +60,7 @@ public sealed class SilentInstaller
 
             case AppInstallerType.Script:
                 Detail($"script command: {app.SilentArgs ?? string.Empty}");
-                return await RunScriptAsync(app.SilentArgs ?? "", timeout, ct);
+                return await RunScriptAsync(app.SilentArgs ?? "", timeout, ct, app.RunAsUser, diagnostics);
 
             case AppInstallerType.WingetUpdate:
                 Detail("running hard-coded winget update command.");
@@ -68,7 +68,7 @@ public sealed class SilentInstaller
                     "winget source update --disable-interactivity; " +
                     "winget upgrade --id Microsoft.AppInstaller -e --silent " +
                     "--accept-source-agreements --accept-package-agreements",
-                    timeout, ct);
+                    timeout, ct, false, diagnostics);
         }
 
         // Process-based installer: use the catalog's intended install scope.
@@ -263,10 +263,25 @@ public sealed class SilentInstaller
         return new RunResult { ExitCode = p.ExitCode, Output = output };
     }
 
-    private static async Task<RunResult> RunScriptAsync(string command, int timeoutSeconds, CancellationToken ct)
+    private static async Task<RunResult> RunScriptAsync(string command, int timeoutSeconds, CancellationToken ct, bool runAsUser, IProgress<string>? diagnostics = null)
     {
-        var psi = new ProcessStartInfo("powershell.exe",
-            $"-NoProfile -ExecutionPolicy Bypass -Command \"{command.Replace("\"", "\\\"")}\"")
+        void Detail(string message) => diagnostics?.Report(message);
+        var arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{command.Replace("\"", "\\\"")}\"";
+        // Per-user scripts (CLI installers writing to LOCALAPPDATA / user PATH)
+        // run through the interactive user's token. Like exe runAsUser runs,
+        // this path captures no transcript. CreateProcessWithTokenW does no
+        // PATH search, so the executable must be a full path.
+        if (runAsUser)
+        {
+            Detail("launch: scope=interactive-user.");
+            var systemPs = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                "WindowsPowerShell", "v1.0", "powershell.exe");
+            var psExe = File.Exists(systemPs) ? systemPs : "powershell.exe";
+            return await RunAsInteractiveUserAsync(psExe, arguments, timeoutSeconds, ct);
+        }
+        Detail("launch: scope=elevated.");
+        var psi = new ProcessStartInfo("powershell.exe", arguments)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
