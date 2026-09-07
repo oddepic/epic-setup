@@ -8,63 +8,23 @@
   <img alt="ui" src="https://img.shields.io/badge/UI-WPF%20%2B%20MVVM-blueviolet">
 </p>
 
-epic setup is a compact Ninite-style installer for Windows. Pick apps from a
-curated catalog, hit install once, and every entry is acquired through its best
-available channel: the winget CLI where a verified package ID exists, or a
-direct vendor/GitHub download as fallback. Silent switches, no telemetry, no
-banners, no winget dependency for the app itself.
+epic setup is a compact Ninite-style installer for Windows. Pick apps from a curated catalog, hit install once, and every entry is acquired through its best available channel: the winget CLI where a verified package ID exists, or a direct vendor/GitHub download as fallback. Silent switches, no telemetry, no banners, no winget dependency for the app itself.
 
-## Key features
+## Install
 
-* One-click batch installs with silent switches per installer type (MSI,
-  NSIS, Inno Setup, Burn, generic EXE, portable, ZIP, script)
-* Multi-backend acquisition: entries declare an ordered `sources` chain
-  (`winget` → `github` → `url`) and the engine falls back automatically when a
-  source fails
-* winget integration without winget dependency: package-manager installs are
-  delegated through `winget --exact --silent`, but the app never requires it;
-  missing winget just means the fallback channel takes over
-* Live fallback proof: download failures and non-zero installer exits move to
-  the next declared source; the log shows which backend served each app
-* 53-app curated catalog with category filter, icons, sizes, and
-  per-app timeouts
-* Self-contained single-file exe, no runtime install needed
-
-## Preview
-
-> Screenshot placeholder: main window with category filter, app grid, and backend
-> log pane. Replace with a GIF of a batch install when available.
-
-```text
-[ screenshot coming soon ]
-```
-
-## Prerequisites & installation
-
-Requirements:
-
-* Windows 10/11 x64
-* .NET 10 SDK (user-local install works fine)
-
-Clone and set up:
+Requirements: Windows 10/11 x64. The published exe is self-contained. Building from source needs the .NET 10 SDK:
 
 ```pwsh
 git clone https://github.com/oddepic/epic-setup.git
 cd epic-setup
 
-# one-time SDK install (user-local, no admin):
+# one-time user-local SDK install, no admin:
 & ([scriptblock]::Create((iwr -UseBasicParsing https://dot.net/v1/dotnet-install.ps1).Content)) -Channel '10.0' -InstallDir "$env:LOCALAPPDATA\Microsoft\DotNet"
 $env:Path = "$env:LOCALAPPDATA\Microsoft\DotNet;$env:Path"
 $env:DOTNET_ROOT = "$env:LOCALAPPDATA\Microsoft\DotNet"
-```
 
-Build:
-
-```pwsh
-# debug build:
+# debug build and tests:
 dotnet build src/epic-setup/epic-setup.csproj -c Debug -p:Platform=x64
-
-# tests:
 dotnet test tests/epic-setup.Tests/epic-setup.Tests.csproj -c Debug -p:Platform=x64
 
 # single-file release exe into dist\:
@@ -74,19 +34,13 @@ dotnet publish src/epic-setup/epic-setup.csproj -c Release -r win-x64 --self-con
   -p:SatelliteResourceLanguages=en -o dist
 ```
 
-## Usage guide
+Tagged `v*` pushes also produce the release exe through CI (`.github/workflows/release.yml`).
 
-Run the built exe with the catalog embedded at compile time (recommended while
-developing; avoids pulling a stale remote catalog):
-
-```pwsh
-tools\run-embedded.cmd   # closes old instances, sets EPICSETUP_EMBEDDED_CATALOG=1
-```
-
-Run the published exe directly:
+## Usage
 
 ```pwsh
-.\dist\epic-setup.exe    # loads the remote catalog from GitHub first
+tools\run-embedded.cmd   # dev run with the embedded catalog, closes old instances first
+.\dist\epic-setup.exe    # published exe, loads the remote catalog first
 ```
 
 Catalog source overrides:
@@ -99,16 +53,12 @@ $env:EPICSETUP_CATALOG_BRANCH  = "main"
 $env:EPICSETUP_GH_TOKEN        = "<token>"        # higher GitHub API rate limits
 ```
 
-Add an app by editing [`catalog.json`](./catalog.json). Entries declare an
-ordered sources chain; verify winget IDs live before adding them
-(`winget show --id <id> --exact`):
+Add an app by editing [`catalog.json`](./catalog.json). Entries declare an ordered sources chain; verify winget IDs live before adding them (`winget show --id <id> --exact`):
 
 ```json
 {
   "id": "7-zip",
   "name": "7-Zip",
-  "description": "File archiver",
-  "homepage": "https://www.7-zip.org/",
   "installerType": "Nsis",
   "sources": [
     { "kind": "winget", "id": "7zip.7zip" },
@@ -118,34 +68,44 @@ ordered sources chain; verify winget IDs live before adding them
 }
 ```
 
-The engine tries sources top-down until one succeeds. `installerType` and
-`silentArgs` apply to downloaded artifacts; delegated installs use the package
-manager's own silent flags.
+Logs land in `%LOCALAPPDATA%\epic-setup\install.log`, plus per-installer logs in `%LOCALAPPDATA%\epic-setup\logs\`.
 
-Logs land in `%LOCALAPPDATA%\epic-setup\install.log` plus per-installer logs in
-`%LOCALAPPDATA%\epic-setup\logs\`.
+## How it works
 
-## Roadmap
+Each catalog entry declares an ordered `sources` chain (`winget` then `github` then `url`). The engine tries sources top-down until one succeeds, so download failures and non-zero installer exits fall through to the next channel instead of failing the install. The log shows which backend served each app. `installerType` and `silentArgs` apply to downloaded artifacts; delegated installs use the package manager's own silent flags.
 
-* [x] Per-entry multi-backend acquisition with automatic fallback
-* [x] winget CLI backend, IDs verified live against the catalog
-* [ ] Publish tracking issue + migrate remaining edge-case entries (avast)
-* [ ] scoop backend (portable/CLI tool coverage)
-* [ ] chocolatey backend (opt-in)
-* [ ] Bootstrap flow for missing package managers, gated behind explicit user consent
-* [ ] Security rework: artifact trust decisions layered on top of working downloads
+## Stack
+
+| Piece | Choice |
+|---|---|
+| UI | WPF with MVVM |
+| Runtime | .NET 10, C# 13 |
+| Tests | xunit |
+| Catalog | `catalog.json` at the repo root |
+| Releases | GitHub Actions on `v*` tags |
+
+## Structure
+
+```
+src/epic-setup/          WPF app (Models, ViewModels, Views, Services)
+tests/epic-setup.Tests/  xunit suite, catalog included as content
+tools/                   dev scripts (run-embedded.cmd, verify-catalog.ps1)
+catalog.json             curated app catalog with sources chains
+prototypes/              UI experiments, not shipped
+```
+
+## Requirements
+
+Windows 10/11 x64. The .NET 10 SDK is needed for builds only; the published exe carries its own runtime.
+
+## Troubleshooting
+
+Missing winget is not an error: the fallback channel takes over automatically. For failed installs, attach `%LOCALAPPDATA%\epic-setup\install.log` when opening an issue.
 
 ## Contributing
 
-Issues and PRs both welcome.
+Bugs and requests go in a GitHub issue with the install log attached. Code branches off `main` with `<type>/<description>` names and keeps `dotnet test` green. Catalog additions follow the `sources` schema above with evidence the URL or package ID is correct.
 
-* Bugs and requests: open a GitHub issue with the install log attached
-  (`%LOCALAPPDATA%\epic-setup\install.log`)
-* Code: branch from `main` using `<type>/<description>` names (`feat/…`,
-  `fix/…`, `chore/…`), keep PRs focused, and make sure `dotnet test` passes
-* Catalog additions: follow the `sources` schema above and include evidence the
-  download URL or package ID is correct
+## License
 
-## 📄 License
-
-No license yet. All rights reserved by the repository owner until one is chosen.
+No license file yet. All rights reserved by the repository owner until one is chosen.
