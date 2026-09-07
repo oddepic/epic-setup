@@ -18,6 +18,8 @@ public partial class AppEntryVm : ObservableObject
     public bool HasWarning => Model.NeedsReview;
     public bool NeedsUserSetup => Model.NeedsUserSetup;
     public bool HasManualSetup => Model.NeedsUserSetup;
+    public bool HasCliTag => Model.Tags.Contains("cli", StringComparer.OrdinalIgnoreCase);
+    public bool HasTuiTag => Model.Tags.Contains("tui", StringComparer.OrdinalIgnoreCase);
 
     // Estimated full app size for the hover tooltip. Returns null when no size
     // is set, which means NO tooltip pops up - so the blank-popup bug can't recur.

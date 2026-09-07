@@ -69,7 +69,7 @@ public partial class MainWindow : Window
     {
         if (prop == nameof(MainViewModel.DetailsOpen))
         {
-            DetailsChevron.Text = vm.DetailsOpen ? "▾" : "▸";
+            DetailsChevron.Text = vm.DetailsOpen ? "" : ""; // Tabler chevron-down (U+EA5F) / chevron-right (U+EA61)
             DetailsToggleLabel.Text = vm.DetailsOpen ? "hide details" : "show details";
             if (vm.DetailsOpen)
             {

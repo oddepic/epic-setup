@@ -374,6 +374,9 @@
                     "asset": "^yt-dlp\\.exe$"
                   }
                 }
+              ],
+              "tags": [
+                "cli"
               ]
             },
             {
@@ -393,6 +396,9 @@
                   "kind": "url",
                   "url": "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
                 }
+              ],
+              "tags": [
+                "cli"
               ]
             },
             {
@@ -788,6 +794,134 @@
                   }
                 }
               ]
+            },
+            {
+              "id": "opencode",
+              "name": "opencode",
+              "description": "Open-source AI coding agent for the terminal",
+              "size": 60,
+              "installerType": "Zip",
+              "portableSubdir": "opencode",
+              "homepage": "https://opencode.ai/",
+              "needsReview": true,
+              "sources": [
+                {
+                  "kind": "winget",
+                  "id": "SST.opencode"
+                },
+                {
+                  "kind": "github",
+                  "github": {
+                    "repo": "anomalyco/opencode",
+                    "asset": "^opencode-windows-x64\\.zip$"
+                  }
+                }
+              ],
+              "tags": [
+                "tui"
+              ]
+            },
+            {
+              "id": "claude-code",
+              "name": "Claude Code",
+              "description": "Anthropic agentic coding tool for the terminal",
+              "size": 30,
+              "installerType": "Portable",
+              "portableSubdir": "claude-code",
+              "homepage": "https://claude.ai/claude-code",
+              "sources": [
+                {
+                  "kind": "winget",
+                  "id": "Anthropic.ClaudeCode"
+                },
+                {
+                  "kind": "url",
+                  "url": "https://downloads.claude.ai/claude-code-releases/2.1.263/win32-x64/claude.exe"
+                }
+              ],
+              "tags": [
+                "cli"
+              ]
+            },
+            {
+              "id": "kimi-code",
+              "name": "Kimi Code",
+              "description": "Moonshot AI coding assistant CLI",
+              "size": 50,
+              "installerType": "Portable",
+              "portableSubdir": "kimi-code",
+              "homepage": "https://moonshotai.github.io/kimi-code/",
+              "sources": [
+                {
+                  "kind": "winget",
+                  "id": "MoonshotAI.KimiCodeCLI"
+                },
+                {
+                  "kind": "url",
+                  "url": "https://code.kimi.com/kimi-code/binaries/0.41.0/kimi-code-win32-x64.exe"
+                }
+              ],
+              "tags": [
+                "cli"
+              ]
+            },
+            {
+              "id": "zcode",
+              "name": "Z Code",
+              "description": "Z.AI coding agent and editor",
+              "size": 200,
+              "installerType": "Nsis",
+              "silentArgs": "/S",
+              "homepage": "https://zcode-ai.com/",
+              "needsReview": true,
+              "sources": [
+                {
+                  "kind": "winget",
+                  "id": "ZhipuAI.ZCode"
+                },
+                {
+                  "kind": "url",
+                  "url": "https://cdn-zcode.z.ai/zcode/electron/releases/3.11.2/windows-x64/ZCode-3.11.2-win-x64.exe"
+                }
+              ]
+            },
+            {
+              "id": "hermes-agent",
+              "name": "Hermes Agent",
+              "description": "Open-source AI agent (TUI + desktop app, script install, no admin)",
+              "size": 500,
+              "installerType": "Script",
+              "silentArgs": "iex (irm https://hermes-agent.nousresearch.com/install.ps1)",
+              "installTimeoutSeconds": 300,
+              "homepage": "https://hermes-agent.nousresearch.com/",
+              "needsReview": true,
+              "tags": [
+                "tui"
+              ]
+            },
+            {
+              "id": "chatgpt",
+              "name": "ChatGPT",
+              "description": "OpenAI chat app (Microsoft Store install, interactive setup)",
+              "size": 150,
+              "installerType": "Exe",
+              "needsUserSetup": true,
+              "homepage": "https://chatgpt.com/",
+              "needsReview": true
+            },
+            {
+              "id": "devin-cli",
+              "name": "Devin CLI",
+              "description": "Cognition coding agent for the terminal (script install; Desktop at devin.ai/download)",
+              "size": 50,
+              "installerType": "Script",
+              "silentArgs": "iex (irm https://static.devin.ai/cli/setup.ps1)",
+              "installTimeoutSeconds": 180,
+              "homepage": "https://devin.ai/download",
+              "needsReview": true,
+              "tags": [
+                "cli"
+              ]
             }
           ]
         },
@@ -912,15 +1046,10 @@
               "needsReview": true
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "games",
-      "name": "Games",
-      "categories": [
+        },
         {
-          "name": "Launchers",
+          "name": "Gaming",
+          "hint": "launchers & games",
           "apps": [
             {
               "id": "steam",
@@ -985,12 +1114,7 @@
                   }
                 }
               ]
-            }
-          ]
-        },
-        {
-          "name": "Games",
-          "apps": [
+            },
             {
               "id": "osu-lazer",
               "name": "osu! lazer",
@@ -1014,12 +1138,7 @@
                   }
                 }
               ]
-            }
-          ]
-        },
-        {
-          "name": "Gaming Tools",
-          "apps": [
+            },
             {
               "id": "msi-afterburner",
               "name": "MSI Afterburner",

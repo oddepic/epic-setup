@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terminal / TUI integration — 3 prototypes</title>
+<!--
+  prototypes/cli-tui.html — faithful mock of the epic-setup selection screen,
+  three directions for integrating CLI/TUI apps. Open by double-click.
+  Behavior authored in TypeScript (prototypes/cli-tui.ts, strict-clean),
+  compiled and inlined over the <script> //__APP_JS__ marker.
+-->
+<style>
+  :root{
+    --bg:#0d0b12; --surface:#12101a; --alt:#17141f; --hover:#211d2c;
+    --border:rgba(255,255,255,.07); --border-strong:rgba(255,255,255,.11);
+    --text:#f4f1f7; --muted:#8c8598; --secondary:#aaa3b5;
+    --accent:#bfa4f5; --accent-soft:rgba(139,108,203,.14);
+    --success:#67c59a; --warn:#d8b36a; --error:#d47787; --info:#7ea9d8;
+    --mono:ui-monospace,"JetBrains Mono","Cascadia Code",Consolas,monospace;
+    --sans:"Segoe UI Variable","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
+    padding:26px 26px 130px; max-width:1180px; margin-inline:auto}
+  .page-head h1{font-size:18px; margin:0 0 4px}
+  .page-head h1 span{color:var(--muted); font-weight:400}
+  .page-head p{color:var(--muted); font-size:13px; margin:0 0 20px}
+  .pane{display:none}
+  .pane.active{display:block}
+  .subview{display:none}
+  .subview.active{display:block}
+  .win{background:var(--surface); border:1px solid var(--border-strong); border-radius:8px; overflow:hidden}
+  .win-head{display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:13px 18px; border-bottom:1px solid var(--border)}
+  .win-title{font-family:var(--mono); font-size:16px; font-weight:600}
+  .win-title small{color:var(--muted); font-weight:400; font-size:11.5px; margin-left:10px}
+  .head-right{display:flex; align-items:center; gap:8px}
+  .seg{display:flex; gap:4px}
+  .seg button{background:transparent; border:0; color:var(--muted);
+    font-family:var(--mono); font-size:12px; padding:7px 12px; border-radius:5px; cursor:pointer}
+  .seg button:hover{background:var(--hover); color:var(--text)}
+  .seg button.active{background:var(--accent-soft); color:var(--text)}
+  select.dark{
+    background:var(--surface); color:var(--muted); border:1px solid var(--border);
+    border-radius:5px; font-family:var(--mono); font-size:12px; padding:7px 10px;
+    min-width:170px; cursor:pointer;
+  }
+  select.dark option{background:var(--surface)}
+  .cols{columns:5 215px; column-gap:22px; padding:14px 18px}
+  .col{break-inside:avoid; border-left:1px solid var(--border); padding:6px 4px 8px 10px; margin-bottom:6px}
+  .cat-head{display:flex; align-items:center; gap:7px; margin-bottom:4px; min-width:0}
+  .cat-name{font-family:var(--mono); font-size:11px; font-weight:700; color:var(--muted); white-space:nowrap}
+  .cat-hint{font-family:var(--mono); font-size:11px; color:var(--muted); opacity:.75;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .cat-count{margin-left:auto; flex:none; font-family:var(--mono); font-size:10px;
+    background:var(--alt); border:1px solid var(--border); border-radius:4px; padding:1px 5px}
+  .box{width:16px; height:16px; border-radius:4px; flex:none; background:var(--alt);
+    border:1.5px solid var(--border-strong); color:#14111d; font-size:11px;
+    line-height:13px; text-align:center; font-family:var(--mono)}
+  .box.on{background:var(--accent); border-color:var(--accent)}
+  .row{display:flex; align-items:center; gap:9px; padding:4px; border-radius:5px; cursor:pointer}
+  .row:hover{background:var(--hover)}
+  .chip{width:18px; height:18px; border-radius:4px; flex:none; background:var(--alt);
+    border:1px solid var(--border); color:var(--muted); font-family:var(--mono);
+    font-size:10px; font-weight:700; line-height:16px; text-align:center}
+  .row-main{min-width:0; flex:1}
+  .row-name{font-family:var(--mono); font-size:12.5px; display:flex; align-items:center;
+    gap:6px; flex-wrap:wrap}
+  .row-sub{color:var(--muted); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .run-hint{display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:1px}
+  .run-hint code{color:var(--accent)}
+  .badge{font-family:var(--mono); font-size:9px; font-weight:700; border-radius:5px;
+    padding:1px 6px; letter-spacing:.04em}
+  .badge-cli{background:rgba(126,169,216,.15); color:var(--info)}
+  .badge-tui{background:rgba(191,164,245,.15); color:var(--accent)}
+  .badge-review{background:rgba(216,179,106,.15); color:var(--warn)}
+  .badge-req{background:rgba(126,169,216,.15); color:var(--info)}
+  .win-foot{display:flex; align-items:center; justify-content:space-between;
+    padding:11px 18px; border-top:1px solid var(--border)}
+  .status{color:var(--muted); font-size:11.5px}
+  .primary{background:var(--accent); color:#14111d; border:0; border-radius:5px;
+    font-family:var(--mono); font-weight:600; font-size:13px; padding:10px 20px; cursor:pointer}
+  .primary:disabled{opacity:.4; cursor:default}
+  .ghost{background:transparent; border:0; color:var(--muted);
+    font-family:var(--mono); font-size:13px; padding:10px 14px; border-radius:5px; cursor:pointer}
+  .ghost:hover{background:var(--hover); color:var(--text)}
+  .inst{display:grid; grid-template-columns:1fr 1.1fr}
+  .inst-left{padding:14px 16px; border-right:1px solid var(--border)}
+  .inst-left h3, .inst-right h3{font-family:var(--mono); font-size:11px; color:var(--muted);
+    margin:0 0 10px; text-transform:uppercase; letter-spacing:.06em}
+  .q{display:flex; align-items:center; gap:10px; padding:9px 10px;
+    border:1px solid var(--border); border-radius:5px; margin-bottom:6px;
+    font-family:var(--mono); font-size:12.5px}
+  .q small{color:var(--muted); font-size:11px; display:block}
+  .consent{margin-top:12px; border:1px solid rgba(216,179,106,.4); border-radius:5px;
+    padding:10px 12px; font-size:12px}
+  .consent code{font-family:var(--mono); font-size:11.5px; color:var(--warn); word-break:break-all}
+  .consent p{margin:0 0 10px; color:var(--secondary)}
+  .inst-right{padding:14px 16px; min-width:0}
+  .term{background:#0a0810; border:1px solid var(--border); border-radius:5px;
+    font-family:var(--mono); font-size:12px; color:var(--secondary);
+    padding:12px 14px; height:260px; overflow-y:auto; white-space:pre-wrap}
+  .t-line{margin:0 0 3px}
+  .t-cmd{color:var(--text)}
+  .t-ok{color:var(--success)}
+  .switcher{position:fixed; left:0; right:0; bottom:0; z-index:10;
+    background:rgba(18,16,26,.96); border-top:1px solid var(--border-strong); padding:12px 0}
+  .switcher-inner{max-width:1180px; margin:0 auto; padding:0 26px; text-align:center}
+  #proto-note{color:var(--muted); font-size:12px; margin:0 0 10px; min-height:17px}
+  .proto-btns{display:flex; gap:8px; justify-content:center}
+  .proto-btns button{background:transparent; border:1px solid var(--border-strong);
+    color:var(--muted); font-family:var(--mono); font-size:12.5px;
+    padding:9px 20px; border-radius:5px; cursor:pointer}
+  .proto-btns button:hover{background:var(--hover); color:var(--text)}
+  .proto-btns button.active{background:var(--accent-soft); color:var(--text); border-color:transparent}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <h1>Terminal / TUI integration <span>— 3 prototypes on the real selection screen</span></h1>
+  <p>Same window, same masonry columns. Data = current catalog plus the 7 new terminal entries. Direction at the bottom.</p>
+</header>
+
+<main>
+  <!-- ==================== A ==================== -->
+  <section class="pane" data-pane="a">
+    <div class="win">
+      <div class="win-head">
+        <div class="win-title">epic setup <small>catalog · prototype</small></div>
+        <div class="head-right">
+          <div class="seg">
+            <button data-kind="all" class="active">All</button>
+            <button data-kind="gui">GUI</button>
+            <button data-kind="terminal">Terminal</button>
+            <button data-kind="tui">TUI</button>
+          </div>
+          <select class="dark" disabled><option>All categories</option></select>
+        </div>
+      </div>
+      <div class="cols" id="a-cols"></div>
+      <div class="win-foot">
+        <span class="status" id="a-status"></span>
+        <button class="primary" id="a-continue">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== B ==================== -->
+  <section class="pane" data-pane="b">
+    <div class="win">
+      <div class="win-head">
+        <div class="win-title">epic setup <small>catalog · prototype</small></div>
+        <div class="head-right"><select class="dark" id="b-select"></select></div>
+      </div>
+      <div class="cols" id="b-cols"></div>
+      <div class="win-foot">
+        <span class="status">Terminal tools live in their own column, with the command to run after install.</span>
+        <button class="primary" id="b-continue">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== C ==================== -->
+  <section class="pane" data-pane="c">
+    <div class="win">
+      <div class="subview active" id="c-select-view">
+        <div class="win-head">
+          <div class="win-title">epic setup <small>catalog · prototype</small></div>
+          <div class="head-right"><select class="dark" disabled><option>All categories</option></select></div>
+        </div>
+        <div class="cols" id="c-cols"></div>
+        <div class="win-foot">
+          <span class="status">Script installs ask before they run.</span>
+          <button class="primary" id="c-continue">Continue</button>
+        </div>
+      </div>
+      <div class="subview" id="c-install-view">
+        <div class="win-head">
+          <div class="win-title">Setting up your apps</div>
+          <div class="head-right"><button class="ghost" id="c-back">Back</button></div>
+        </div>
+        <div class="inst">
+          <div class="inst-left">
+            <h3>Queue</h3>
+            <div class="q"><span class="box on">✓</span><span>devin-cli<small>script — approved</small></span></div>
+            <div class="consent">
+              <p>This install runs a command on your machine:</p>
+              <code>iex (irm https://static.devin.ai/cli/setup.ps1)</code>
+              <p style="margin-top:10px"><button class="primary" id="c-approve">Approve &amp; run</button></p>
+            </div>
+          </div>
+          <div class="inst-right">
+            <h3>Terminal output</h3>
+            <div class="term" id="c-term"><div class="t-line">waiting for approval…</div></div>
+          </div>
+        </div>
+        <div class="win-foot">
+          <span class="status" id="c-status">Reviewing 1 app…</span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="switcher">
+  <div class="switcher-inner">
+    <p id="proto-note"></p>
+    <div class="proto-btns">
+      <button data-proto="a">Prototype A · badges</button>
+      <button data-proto="b">Prototype B · terminal column</button>
+      <button data-proto="c">Prototype C · install stage</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+"use strict";
+// prototypes/cli-tui.ts — behavior for prototypes/cli-tui.html.
+// Faithful full-window mock of the epic-setup selection screen (masonry
+// columns, category headers, footer), three directions for integrating
+// CLI/TUI apps. Data = remote catalog + the 7 new Development entries.
+// Compile and inline over the <script> //__APP_JS__ marker:
+//   npx -p typescript tsc --target es2020 --lib es2020,dom --strict prototypes/cli-tui.ts --outDir %TEMP%
+const DEVS = [
+    { id: "vscode", name: "Visual Studio Code", desc: "Lightweight, extensible code editor", kind: "gui", via: "winget", chips: ["REVIEW"] },
+    { id: "cursor", name: "Cursor", desc: "AI code editor", kind: "gui", via: "winget", chips: ["REVIEW"] },
+    { id: "opencode", name: "opencode", desc: "Open-source AI coding agent for the terminal", kind: "tui", via: "github zip" },
+    { id: "claude-code", name: "Claude Code", desc: "Anthropic agentic coding tool for the terminal", kind: "terminal", via: "winget" },
+    { id: "kimi-code", name: "Kimi Code", desc: "Moonshot AI coding assistant CLI", kind: "terminal", via: "winget" },
+    { id: "devin-cli", name: "Devin CLI", desc: "Cognition coding agent for the terminal", kind: "terminal", via: "script" },
+    { id: "hermes-agent", name: "Hermes Agent", desc: "Open-source AI agent, CLI plus desktop", kind: "tui", via: "script" },
+    { id: "zcode", name: "Z Code", desc: "Z.AI coding agent and editor", kind: "gui", via: "winget" },
+    { id: "chatgpt", name: "ChatGPT", desc: "OpenAI chat app (Store install)", kind: "gui", via: "store", chips: ["REVIEW", "REQ. SETUP"] },
+    { id: "git", name: "Git", desc: "Distributed version control for Windows", kind: "gui", via: "winget", chips: ["REVIEW"] },
+];
+const BASE_CATS = [
+    { name: "Browsers", hint: "web & private browsers", apps: [
+            { id: "chrome", name: "Google Chrome", desc: "Fast, secure browser by Google", kind: "gui", via: "winget" },
+            { id: "brave", name: "Brave", desc: "Privacy-first browser", kind: "gui", via: "winget" },
+            { id: "helium", name: "Helium", desc: "Privacy-focused Chromium fork", kind: "gui", via: "winget" },
+        ] },
+    { name: "Communication", hint: "chat & meetings", apps: [
+            { id: "discord", name: "Discord", desc: "Voice, video & text chat", kind: "gui", via: "winget" },
+            { id: "telegram", name: "Telegram Desktop", desc: "Fast and secure messaging", kind: "gui", via: "winget" },
+        ] },
+    { name: "Media", hint: "video, audio & creation", apps: [
+            { id: "obs-studio", name: "OBS Studio", desc: "Streaming and recording studio", kind: "gui", via: "winget" },
+            { id: "ffmpeg", name: "FFmpeg", desc: "Audio/video toolkit, portable", kind: "terminal", via: "winget" },
+            { id: "yt-dlp", name: "yt-dlp", desc: "Command-line video downloader", kind: "terminal", via: "winget" },
+        ] },
+    { name: "Utilities", hint: "files & system", apps: [
+            { id: "7-zip", name: "7-Zip", desc: "Open-source file archiver", kind: "gui", via: "winget" },
+            { id: "powertoys", name: "PowerToys", desc: "Power-user utilities", kind: "gui", via: "winget" },
+        ] },
+    { name: "Development", hint: "tools & runtimes", apps: DEVS },
+    { name: "Gaming", hint: "launchers, games & tools", apps: [
+            { id: "steam", name: "Steam", desc: "Valve game store & library", kind: "gui", via: "winget" },
+            { id: "osu-lazer", name: "osu! lazer", desc: "Open-source rhythm game", kind: "gui", via: "winget" },
+        ] },
+];
+const RUN_CMD = {
+    "opencode": "opencode", "claude-code": "claude", "kimi-code": "kimi",
+    "devin-cli": "devin", "hermes-agent": "hermes", "ffmpeg": "ffmpeg", "yt-dlp": "yt-dlp",
+};
+function el(id) {
+    const n = document.getElementById(id);
+    if (!n)
+        throw new Error("missing #" + id);
+    return n;
+}
+function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function kindBadge(a) {
+    if (a.kind === "gui")
+        return "";
+    const cls = a.kind === "tui" ? "badge-tui" : "badge-cli";
+    return `<span class="badge ${cls}">${a.kind === "tui" ? "TUI" : "CLI"}</span>`;
+}
+function warnChips(a) {
+    return (a.chips ?? []).map((c) => `<span class="badge ${c === "REVIEW" ? "badge-review" : "badge-req"}">${c}</span>`).join("");
+}
+function rowHtml(a, checked, opts) {
+    const run = opts.runHint && RUN_CMD[a.id] ? `<span class="run-hint">run › <code>${RUN_CMD[a.id]}</code></span>` : "";
+    return `<label class="row" data-id="${a.id}">
+    <span class="box${checked ? " on" : ""}">${checked ? "✓" : ""}</span>
+    <span class="chip">${esc(a.name[0])}</span>
+    <span class="row-main">
+      <span class="row-name">${esc(a.name)}${opts.badges ? kindBadge(a) : ""}${warnChips(a)}</span>
+      <span class="row-sub">${esc(a.desc)}</span>${run}
+    </span>
+  </label>`;
+}
+function colHtml(c, checked, n, opts) {
+    const sel = c.apps.filter((a) => checked.has(a.id)).length;
+    const hint = c.hint ? `<span class="cat-hint">(${esc(c.hint)})</span>` : "";
+    return `<div class="col" data-col="${esc(c.name)}">
+    <div class="cat-head"><span class="box"></span>
+      <span class="cat-name">${esc(c.name)}</span>${hint}
+      <span class="cat-count">${sel}/${c.apps.length}</span>
+    </div>
+    ${c.apps.map((a) => rowHtml(a, checked.has(a.id), opts)).join("")}
+  </div>`;
+}
+function wireRows(root, checked, rerender) {
+    for (const r of Array.from(root.querySelectorAll(".row"))) {
+        r.addEventListener("click", (ev) => {
+            ev.preventDefault();
+            const id = r.dataset.id ?? "";
+            if (checked.has(id))
+                checked.delete(id);
+            else
+                checked.add(id);
+            rerender();
+        });
+    }
+}
+/* ---------- switcher ---------- */
+function initSwitcher() {
+    const btns = Array.from(document.querySelectorAll("[data-proto]"));
+    const panes = Array.from(document.querySelectorAll("[data-pane]"));
+    const note = el("proto-note");
+    const notes = {
+        a: "A · Kind badges in place — terminal entries stay where they are, marked CLI/TUI next to REVIEW. One badge style + one filter.",
+        b: "B · Terminal category — CLI/TUI tools move into their own masonry column with run-command hints. No new widgets, regrouped data.",
+        c: "C · Terminal install stage — selection gains badges, and script installs get an approve-before-run terminal drawer.",
+    };
+    function show(key) {
+        for (const b of btns)
+            b.classList.toggle("active", b.dataset.proto === key);
+        for (const p of panes)
+            p.classList.toggle("active", p.dataset.pane === key);
+        note.textContent = notes[key] ?? "";
+    }
+    for (const b of btns)
+        b.addEventListener("click", () => show(b.dataset.proto ?? "a"));
+    show("a");
+}
+/* ---------- A: badges + kind filter ---------- */
+function initA() {
+    const cols = el("a-cols");
+    const status = el("a-status");
+    const cont = el("a-continue");
+    const segs = Array.from(document.querySelectorAll("[data-kind]"));
+    const checked = new Set();
+    let kind = "all";
+    function render() {
+        const visible = BASE_CATS.map((c) => ({
+            ...c, apps: c.apps.filter((a) => kind === "all" || a.kind === kind),
+        })).filter((c) => c.apps.length > 0);
+        cols.innerHTML = visible.map((c) => colHtml(c, checked, 0, { badges: true, runHint: false })).join("");
+        wireRows(cols, checked, render);
+        const total = BASE_CATS.reduce((n, c) => n + c.apps.length, 0);
+        status.textContent = `${BASE_CATS.length} categories · ${total} apps available.`;
+        cont.textContent = `Continue (${checked.size}/${total})`;
+    }
+    for (const s of segs)
+        s.addEventListener("click", () => {
+            kind = s.dataset.kind ?? "all";
+            for (const x of segs)
+                x.classList.toggle("active", x === s);
+            render();
+        });
+    render();
+}
+/* ---------- B: terminal category ---------- */
+function terminalCats() {
+    const termApps = BASE_CATS.flatMap((c) => c.apps).filter((a) => a.kind !== "gui");
+    const guiCats = BASE_CATS.map((c) => ({ ...c, apps: c.apps.filter((a) => a.kind === "gui") }))
+        .filter((c) => c.apps.length > 0);
+    const out = [];
+    for (const c of guiCats) {
+        out.push(c);
+        if (c.name === "Development")
+            out.push({ name: "Terminal", hint: "cli & tui tools", apps: termApps });
+    }
+    return out;
+}
+function initB() {
+    const cols = el("b-cols");
+    const sel = el("b-select");
+    const cont = el("b-continue");
+    const checked = new Set();
+    const cats = terminalCats();
+    sel.innerHTML = `<option value="__all">All categories</option>` +
+        cats.map((c) => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("");
+    function render() {
+        const f = sel.value;
+        const visible = cats.filter((c) => f === "__all" || c.name === f);
+        cols.innerHTML = visible.map((c) => colHtml(c, checked, 0, { badges: false, runHint: true })).join("");
+        wireRows(cols, checked, render);
+        const total = cats.reduce((n, c) => n + c.apps.length, 0);
+        cont.textContent = `Continue (${checked.size}/${total})`;
+    }
+    sel.addEventListener("change", render);
+    render();
+}
+/* ---------- C: terminal install stage ---------- */
+const C_LINES = [
+    "$ iex (irm https://static.devin.ai/cli/setup.ps1)",
+    "downloading devin cli (win32-x64) … 12.4 MB",
+    "installing to %USERPROFILE%\\.devin\\bin",
+    "added to PATH — reopen the terminal to use it",
+    "$ devin --version",
+    "devin 1.4.0 (windows-x64)",
+    "✓ devin-cli installed",
+];
+function initC() {
+    const cols = el("c-cols");
+    const cont = el("c-continue");
+    const checked = new Set(["devin-cli"]);
+    const selView = el("c-select-view");
+    const instView = el("c-install-view");
+    const term = el("c-term");
+    const approve = el("c-approve");
+    const back = el("c-back");
+    const status = el("c-status");
+    let running = false;
+    function render() {
+        cols.innerHTML = BASE_CATS.map((c) => colHtml(c, checked, 0, { badges: true, runHint: false })).join("");
+        wireRows(cols, checked, render);
+        const total = BASE_CATS.reduce((n, c) => n + c.apps.length, 0);
+        cont.textContent = `Continue (${checked.size}/${total})`;
+    }
+    cont.addEventListener("click", () => {
+        if (checked.size === 0)
+            return;
+        selView.classList.remove("active");
+        instView.classList.add("active");
+    });
+    back.addEventListener("click", () => {
+        instView.classList.remove("active");
+        selView.classList.add("active");
+    });
+    approve.addEventListener("click", async () => {
+        if (running)
+            return;
+        running = true;
+        approve.disabled = true;
+        term.innerHTML = "";
+        status.textContent = "Installing 1 app…";
+        for (const line of C_LINES) {
+            const div = document.createElement("div");
+            div.className = "t-line" + (line.startsWith("$") ? " t-cmd" : line.startsWith("✓") ? " t-ok" : "");
+            div.textContent = line;
+            term.appendChild(div);
+            term.scrollTop = term.scrollHeight;
+            await new Promise((r) => setTimeout(r, 300));
+        }
+        status.textContent = "Done: 1 installed. Next: open a terminal and run devin";
+        running = false;
+    });
+    render();
+}
+document.addEventListener("DOMContentLoaded", () => {
+    initSwitcher();
+    initA();
+    initB();
+    initC();
+});
+
+</script>
+</body>
+</html>

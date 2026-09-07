@@ -26,13 +26,13 @@ banners, no winget dependency for the app itself.
   missing winget just means the fallback channel takes over
 * Live fallback proof: download failures and non-zero installer exits move to
   the next declared source; the log shows which backend served each app
-* 46-app curated catalog across Apps and Games tabs with icons, sizes, and
+* 53-app curated catalog with category filter, icons, sizes, and
   per-app timeouts
 * Self-contained single-file exe, no runtime install needed
 
 ## Preview
 
-> Screenshot placeholder: main window with category tabs, app grid, and backend
+> Screenshot placeholder: main window with category filter, app grid, and backend
 > log pane. Replace with a GIF of a batch install when available.
 
 ```text

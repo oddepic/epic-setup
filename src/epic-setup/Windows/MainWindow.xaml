@@ -41,21 +41,12 @@
                                VerticalAlignment="Center" Margin="12,3,0,0"/>
                 </StackPanel>
 
-                <!-- Tabs (hidden while reviewing) -->
-                <ItemsControl ItemsSource="{Binding Tabs}" HorizontalAlignment="Right" VerticalAlignment="Center"
-                              Visibility="{Binding IsReviewing, Converter={StaticResource InvBoolVis}}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:TabVm}">
-                            <RadioButton Style="{StaticResource TabButton}" Content="{Binding Name}"
-                                         IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,4,0"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <!-- Category filter (hidden while reviewing) -->
+                <ComboBox Style="{StaticResource CategoryFilterCombo}"
+                          ItemsSource="{Binding CategoryFilter}"
+                          SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                          HorizontalAlignment="Right" VerticalAlignment="Center"
+                          Visibility="{Binding IsReviewing, Converter={StaticResource InvBoolVis}}"/>
             </Grid>
         </Border>
 
@@ -126,6 +117,20 @@
                                                                 <TextBlock Style="{StaticResource AppNameText}"
                                                                            Text="{Binding Name}" Margin="9,0,0,0"
                                                                            VerticalAlignment="Center"/>
+                                                                <Border Visibility="{Binding HasCliTag, Converter={StaticResource BoolVis}}"
+                                                                        Background="#22AAA3B5" CornerRadius="5" Padding="6,1"
+                                                                        Margin="8,0,0,0" VerticalAlignment="Center">
+                                                                    <TextBlock Style="{StaticResource ChipText}"
+                                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                                               Text="CLI"/>
+                                                                </Border>
+                                                                <Border Visibility="{Binding HasTuiTag, Converter={StaticResource BoolVis}}"
+                                                                        Background="{StaticResource AccentSoftBrush}" CornerRadius="5" Padding="6,1"
+                                                                        Margin="8,0,0,0" VerticalAlignment="Center">
+                                                                    <TextBlock Style="{StaticResource ChipText}"
+                                                                               Foreground="{StaticResource AccentBrush}"
+                                                                               Text="TUI"/>
+                                                                </Border>
                                                                 <Border Visibility="{Binding HasWarning, Converter={StaticResource BoolVis}}"
                                                                         Background="#26D8B36A" CornerRadius="5" Padding="6,1"
                                                                         Margin="8,0,0,0" VerticalAlignment="Center">
@@ -477,18 +482,19 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: status line, or the details toggle while installing -->
+                <!-- Left: status line in selection phase, details toggle once reviewing -->
                 <Grid Grid.Column="0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding StatusText}" Style="{StaticResource SmallMuted}"
                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                ToolTip="{Binding InstalledAppsTooltip}"
-                               Visibility="{Binding IsInstalling, Converter={StaticResource InvBoolVis}}"/>
+                               Visibility="{Binding IsReviewing, Converter={StaticResource InvBoolVis}}"/>
                     <Button Style="{StaticResource GhostButton}" Padding="12,7"
                             HorizontalAlignment="Left" VerticalAlignment="Center"
                             Command="{Binding ToggleDetailsCommand}"
+                            Visibility="{Binding IsReviewing, Converter={StaticResource BoolVis}}"
                             ToolTip="Full engine log - stays open after the run ends">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="DetailsChevron" Text="&#x25B8;" FontFamily="{StaticResource JetBrainsMono}"
+                            <TextBlock x:Name="DetailsChevron" Text="&#xEA61;" FontFamily="{StaticResource TablerIcons}"
                                        FontSize="11" VerticalAlignment="Center"/>
                             <TextBlock x:Name="DetailsToggleLabel" Text="show details" Margin="8,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>

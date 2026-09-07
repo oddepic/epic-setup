@@ -17,12 +17,15 @@ public partial class MainViewModel : ObservableObject
     private readonly InstallEngine _engine;
     private readonly List<AppEntryVm> _allApps = new();
 
-    public ObservableCollection<TabVm> Tabs { get; } = new();
+    public const string AllCategoriesLabel = "All categories";
+    public ObservableCollection<string> CategoryFilter { get; } = new();
+    private readonly List<CategoryVm> _allCategories = new();
     public ObservableCollection<CategoryVm> Categories { get; } = new();
     public ObservableCollection<AppEntryVm> ReviewItems { get; } = new();
     public ObservableCollection<string> LogLines { get; } = new();
 
     [ObservableProperty] private bool _detailsOpen;
+    [ObservableProperty] private string _selectedCategory = AllCategoriesLabel;
 
     [RelayCommand]
     private void ToggleDetails() => DetailsOpen = !DetailsOpen;
@@ -100,8 +103,10 @@ public partial class MainViewModel : ObservableObject
     {
         IsLoading = true;
         StatusText = "Loading catalog…";
-        Tabs.Clear();
+        CategoryFilter.Clear();
         Categories.Clear();
+        _allCategories.Clear();
+        SelectedCategory = AllCategoriesLabel;
         _allApps.Clear();
         ReviewItems.Clear();
         BackendLogText = "";
@@ -123,7 +128,7 @@ public partial class MainViewModel : ObservableObject
             if (versionText.IndexOf('+') >= 0) versionText = versionText[..versionText.IndexOf('+')];
             CatalogSourceText = $"{srcText} · v{versionText}";
             TotalCount = _allApps.Count;
-            StatusText = $"{Tabs.Count} tabs · {TotalCount} apps available.";
+            StatusText = $"{_allCategories.Count} categories · {TotalCount} apps available.";
             var process = System.Diagnostics.Process.GetCurrentProcess();
             var exePath = process.MainModule?.FileName ?? Environment.ProcessPath ?? "<unknown>";
             AppendBackendLog($"process: pid={process.Id} exe={exePath}");
@@ -145,15 +150,22 @@ public partial class MainViewModel : ObservableObject
 
     private void ApplyCatalog(Catalog catalog)
     {
-        foreach (var tabDef in catalog.Tabs)
-        {
-            var categories = tabDef.Categories.Select(c =>
-                new CategoryVm(c.Name, c.Hint, c.Apps.Select(CreateAppVm))).ToList();
-            var tab = new TabVm(tabDef.Name, categories);
-            tab.PropertyChanged += TabOnPropertyChanged;
-            Tabs.Add(tab);
-        }
-        if (Tabs.Count > 0) Tabs[0].IsSelected = true;
+        foreach (var c in catalog.Tabs.SelectMany(t => t.Categories))
+            _allCategories.Add(new CategoryVm(c.Name, c.Hint, c.Apps.Select(CreateAppVm)));
+        CategoryFilter.Add(AllCategoriesLabel);
+        foreach (var c in _allCategories) CategoryFilter.Add(c.Name);
+        SelectedCategory = AllCategoriesLabel;
+        ApplyCategoryFilter();
+    }
+
+    partial void OnSelectedCategoryChanged(string value) => ApplyCategoryFilter();
+
+    private void ApplyCategoryFilter()
+    {
+        Categories.Clear();
+        var showAll = SelectedCategory == AllCategoriesLabel;
+        foreach (var c in _allCategories.Where(c => showAll || c.Name == SelectedCategory))
+            Categories.Add(c);
     }
 
     private AppEntryVm CreateAppVm(AppEntry entry)
@@ -162,18 +174,6 @@ public partial class MainViewModel : ObservableObject
         vm.PropertyChanged += AppVmOnPropertyChanged;
         _allApps.Add(vm);
         return vm;
-    }
-
-    private void TabOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(TabVm.IsSelected) && sender is TabVm t && t.IsSelected && !IsReviewing)
-            ShowTab(t);
-    }
-
-    private void ShowTab(TabVm tab)
-    {
-        Categories.Clear();
-        foreach (var c in tab.Categories) Categories.Add(c);
     }
 
     private void AppVmOnPropertyChanged(object? sender, PropertyChangedEventArgs e)

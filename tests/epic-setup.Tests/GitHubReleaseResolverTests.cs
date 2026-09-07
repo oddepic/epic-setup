@@ -47,7 +47,7 @@ public class GitHubReleaseResolverTests
             .Where(x => x.Source.Kind == AppSourceKind.GitHub)
             .ToList();
 
-        Assert.Equal(17, githubSources.Count);
+        Assert.Equal(18, githubSources.Count);
 
         foreach (var (appId, source) in githubSources)
         {
@@ -106,6 +106,7 @@ public class GitHubReleaseResolverTests
         "obsidian" => "Obsidian-1.6.7.exe",
         "prism-launcher" => "PrismLauncher-Windows-MSVC-Setup-9.1.exe",
         "osu-lazer" => "install.exe",
+        "opencode" => "opencode-windows-x64.zip",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Unknown GitHub app id")
     };
 }
