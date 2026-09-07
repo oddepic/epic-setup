@@ -230,6 +230,7 @@ public partial class MainViewModel : ObservableObject
         IsInstalling = true;
         OverallProgress = 0;
         BackendLogText = "";
+        LogLines.Clear(); // fresh transcript per run; the old one is in %LOCALAPPDATA%\epic-setup\install.log
         ProgressDetail = "Starting…";
         StatusText = $"Installing {selected.Count} apps…";
 
