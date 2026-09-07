@@ -66,6 +66,7 @@ public sealed class AppEntry
     [JsonPropertyName("needsReview")] public bool NeedsReview { get; set; }   // legacy UI warning metadata
     [JsonPropertyName("needsUserSetup")] public bool NeedsUserSetup { get; set; } // legacy metadata; selected entries are still attempted
     [JsonPropertyName("homepage")] public string? Homepage { get; set; }
+    [JsonPropertyName("tags")] public List<string> Tags { get; set; } = new(); // e.g. "cli", "tui" (shown as row badges)
 
     [JsonIgnore] public AppInstallerType ParsedType =>
         Enum.TryParse(InstallerTypeName, true, out AppInstallerType t) ? t : AppInstallerType.Auto;

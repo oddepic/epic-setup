@@ -12,10 +12,10 @@ public class CatalogManifestTests
         var catalog = CatalogFixture.Load();
         var apps = CatalogFixture.AllApps(catalog);
 
-        Assert.Equal(2, catalog.Tabs.Count);
-        Assert.Equal(46, apps.Count);
+        Assert.Equal(1, catalog.Tabs.Count);
+        Assert.Equal(53, apps.Count);
 
-        Assert.Equal(46, apps.Select(a => a.Id).Distinct().Count());
+        Assert.Equal(53, apps.Select(a => a.Id).Distinct().Count());
         foreach (var app in apps)
         {
             Assert.False(string.IsNullOrWhiteSpace(app.Id));
@@ -38,7 +38,7 @@ public class CatalogManifestTests
                 Assert.Empty(app.EffectiveSources); // inline command, no acquisition
                 continue;
             }
-            if (app.Id == "msi-afterburner")
+            if (app.Id is "msi-afterburner" or "chatgpt")
             {
                 Assert.Empty(app.EffectiveSources); // manual-only entry
                 continue;
@@ -118,7 +118,7 @@ public class CatalogManifestTests
         var portableIds = apps.Where(a => a.ParsedType == AppInstallerType.Portable ||
                                           a.ParsedType == AppInstallerType.Zip)
             .Select(a => a.Id).OrderBy(x => x).ToArray();
-        Assert.Equal(new[] { "ffmpeg", "yt-dlp" }, portableIds);
+        Assert.Equal(new[] { "claude-code", "ffmpeg", "kimi-code", "opencode", "yt-dlp" }, portableIds);
 
         foreach (var app in apps.Where(a => a.ParsedType is AppInstallerType.Portable or AppInstallerType.Zip))
         {
