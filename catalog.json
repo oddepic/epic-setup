@@ -916,7 +916,6 @@
               "silentArgs": "$t = (irm https://static.devin.ai/cli/setup.ps1); if ($t -notmatch '(?m)^& \\$EntryExe setup\\s*$') { throw 'devin setup.ps1 changed shape, refusing to run blind' }; & ([scriptblock]::Create(($t -replace '(?m)^& \\$EntryExe setup\\s*$', '# stripped by epic-setup: run devin setup yourself to log in')))",
               "installTimeoutSeconds": 180,
               "homepage": "https://devin.ai/download",
-              "needsReview": true,
               "tags": [
                 "cli"
               ],
