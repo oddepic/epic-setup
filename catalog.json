@@ -97,7 +97,8 @@
                   "kind": "url",
                   "url": "https://downloads.vivaldi.com/stable/Vivaldi.x64.exe"
                 }
-              ]
+              ],
+              "needsUserSetup": true
             },
             {
               "id": "helium",
@@ -311,7 +312,8 @@
                   "kind": "url",
                   "url": "https://download.scdn.co/SpotifySetup.exe"
                 }
-              ]
+              ],
+              "needsUserSetup": true
             },
             {
               "id": "audacity",
@@ -421,7 +423,8 @@
                     "asset": "^TaigaSetup_[0-9.]+\\.exe$"
                   }
                 }
-              ]
+              ],
+              "needsUserSetup": true
             },
             {
               "id": "medal",
@@ -1113,7 +1116,8 @@
                     "asset": "^PrismLauncher-Windows-MSVC-Setup-.*\\.exe$"
                   }
                 }
-              ]
+              ],
+              "needsUserSetup": true
             },
             {
               "id": "osu-lazer",
