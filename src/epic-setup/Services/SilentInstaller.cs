@@ -498,6 +498,7 @@ public sealed class SilentInstaller
         Directory.CreateDirectory(root);
         var dest = Path.Combine(root, Path.GetFileName(localPath));
         File.Copy(localPath, dest, true);
+        EnsureUserPath(root);
         return new RunResult { ExitCode = 0 };
     }
 
@@ -523,8 +524,37 @@ public sealed class SilentInstaller
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             entry.ExtractToFile(target, overwrite: true);
         }
+        EnsureUserPath(fullRoot);
         return new RunResult { ExitCode = 0 };
     }
+
+    /// <summary>Adds a directory to the user's PATH so portable CLI tools run
+    /// from a fresh terminal. Best effort: never fails the install.</summary>
+    private static void EnsureUserPath(string dir)
+    {
+        try
+        {
+            var current = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User) ?? "";
+            var parts = current.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            if (parts.Any(p => string.Equals(p.TrimEnd('\\'), dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)))
+                return;
+            parts.Add(dir);
+            var updated = string.Join(';', parts);
+            if (updated.Length > 32767) return; // registry cap; don't corrupt PATH
+            Environment.SetEnvironmentVariable("Path", updated, EnvironmentVariableTarget.User);
+            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Environment",
+                SMTO_ABORTIFHUNG, 5000, out _);
+        }
+        catch { }
+    }
+
+    private const uint WM_SETTINGCHANGE = 0x001A;
+    private const uint SMTO_ABORTIFHUNG = 0x0002;
+    private static readonly IntPtr HWND_BROADCAST = new(0xffff);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    private static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam,
+        string lParam, uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
 
     private static string PortableRoot(AppEntry app)
         => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

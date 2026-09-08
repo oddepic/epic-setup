@@ -335,7 +335,8 @@
                     "asset": "^audacity-win-[0-9.]+-x86_64\\.msi$"
                   }
                 }
-              ]
+              ],
+              "needsReview": true
             },
             {
               "id": "blender",
@@ -818,7 +819,8 @@
               ],
               "tags": [
                 "tui"
-              ]
+              ],
+              "needsReview": true
             },
             {
               "id": "claude-code",
@@ -840,7 +842,8 @@
               ],
               "tags": [
                 "cli"
-              ]
+              ],
+              "needsReview": true
             },
             {
               "id": "kimi-code",
@@ -862,7 +865,8 @@
               ],
               "tags": [
                 "cli"
-              ]
+              ],
+              "needsReview": true
             },
             {
               "id": "zcode",
