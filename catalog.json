@@ -320,8 +320,8 @@
               "name": "Audacity",
               "description": "Free, open-source audio editor and recorder",
               "size": 40,
-              "installerType": "Inno",
-              "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-",
+              "installerType": "Msi",
+              "silentArgs": "/quiet /norestart",
               "homepage": "https://www.audacityteam.org/",
               "sources": [
                 {
@@ -332,7 +332,7 @@
                   "kind": "github",
                   "github": {
                     "repo": "audacity/audacity",
-                    "asset": "^audacity-win-[0-9.]+-64bit\\.exe$"
+                    "asset": "^audacity-win-[0-9.]+-x86_64\\.msi$"
                   }
                 }
               ]
@@ -354,7 +354,9 @@
                   "kind": "url",
                   "url": "https://download.blender.org/release/Blender5.2/blender-5.2.0-windows-x64.msi"
                 }
-              ]
+              ],
+              "needsReview": true,
+              "installTimeoutSeconds": 600
             },
             {
               "id": "yt-dlp",
@@ -596,7 +598,6 @@
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /MERGETASKS=!runcode",
               "homepage": "https://code.visualstudio.com/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -628,7 +629,8 @@
                   "kind": "url",
                   "url": "https://api2.cursor.sh/updates/download/golden/win32-x64-user/cursor/3.14"
                 }
-              ]
+              ],
+              "needsUserSetup": true
             },
             {
               "id": "antigravity",
@@ -649,7 +651,8 @@
                   "kind": "url",
                   "url": "https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/2.1.1-6123990880747520/windows-x64/Antigravity%20IDE.exe"
                 }
-              ]
+              ],
+              "needsUserSetup": true
             },
             {
               "id": "jetbrains-toolbox",
@@ -661,7 +664,6 @@
               "runAsUser": true,
               "installTimeoutSeconds": 180,
               "homepage": "https://www.jetbrains.com/toolbox-app/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -685,7 +687,6 @@
                 "arduino"
               ],
               "homepage": "https://www.arduino.cc/en/software",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -719,7 +720,6 @@
               "installerType": "Burn",
               "silentArgs": "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0",
               "homepage": "https://www.python.org/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -739,7 +739,6 @@
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS",
               "homepage": "https://gitforwindows.org/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -762,7 +761,6 @@
               "installerType": "Burn",
               "silentArgs": "/install /quiet /norestart",
               "homepage": "https://dotnet.microsoft.com/download/dotnet",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -783,7 +781,6 @@
               "silentArgs": "/quiet /norestart ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJavaHome,FeatureJarFileRunWith",
               "installTimeoutSeconds": 180,
               "homepage": "https://adoptium.net/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -806,7 +803,6 @@
               "installerType": "Zip",
               "portableSubdir": "opencode",
               "homepage": "https://opencode.ai/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -876,7 +872,6 @@
               "installerType": "Nsis",
               "silentArgs": "/S",
               "homepage": "https://zcode-ai.com/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
@@ -985,7 +980,6 @@
               "silentArgs": "/quiet /norestart",
               "installTimeoutSeconds": 180,
               "homepage": "https://www.libreoffice.org/",
-              "needsReview": true,
               "sources": [
                 {
                   "kind": "winget",
