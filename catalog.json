@@ -436,7 +436,6 @@
               "size": 150,
               "installerType": "Exe",
               "silentArgs": "--silent",
-              "needsUserSetup": true,
               "homepage": "https://medal.tv/",
               "sources": [
                 {
@@ -618,7 +617,7 @@
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /MERGETASKS=!runcode",
               "runAsUser": true,
-              "installTimeoutSeconds": 180,
+              "installTimeoutSeconds": 600,
               "homepage": "https://cursor.sh/",
               "needsReview": true,
               "sources": [
@@ -630,8 +629,7 @@
                   "kind": "url",
                   "url": "https://api2.cursor.sh/updates/download/golden/win32-x64-user/cursor/3.14"
                 }
-              ],
-              "needsUserSetup": true
+              ]
             },
             {
               "id": "antigravity",
@@ -640,7 +638,7 @@
               "size": 200,
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
-              "installTimeoutSeconds": 180,
+              "installTimeoutSeconds": 600,
               "homepage": "https://antigravity.google/",
               "needsReview": true,
               "sources": [
@@ -652,8 +650,7 @@
                   "kind": "url",
                   "url": "https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/2.1.1-6123990880747520/windows-x64/Antigravity%20IDE.exe"
                 }
-              ],
-              "needsUserSetup": true
+              ]
             },
             {
               "id": "jetbrains-toolbox",
@@ -709,7 +706,7 @@
               "size": 250,
               "installerType": "Script",
               "silentArgs": "& {[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://dot.net/v1/dotnet-install.ps1').Content)) -Channel '10.0' -InstallDir $env:LOCALAPPDATA\\Microsoft\\DotNet}",
-              "installTimeoutSeconds": 180,
+              "installTimeoutSeconds": 600,
               "homepage": "https://dotnet.microsoft.com/",
               "needsReview": true
             },
@@ -894,7 +891,7 @@
               "size": 500,
               "installerType": "Script",
               "silentArgs": "iex (irm https://hermes-agent.nousresearch.com/install.ps1)",
-              "installTimeoutSeconds": 300,
+              "installTimeoutSeconds": 900,
               "homepage": "https://hermes-agent.nousresearch.com/",
               "needsReview": true,
               "tags": [
@@ -907,7 +904,6 @@
               "description": "OpenAI chat app (Microsoft Store install, interactive setup)",
               "size": 150,
               "installerType": "Exe",
-              "needsUserSetup": true,
               "homepage": "https://chatgpt.com/",
               "needsReview": true
             },
@@ -920,11 +916,9 @@
               "silentArgs": "$t = (irm https://static.devin.ai/cli/setup.ps1); if ($t -notmatch '(?m)^& \\$EntryExe setup\\s*$') { throw 'devin setup.ps1 changed shape, refusing to run blind' }; & ([scriptblock]::Create(($t -replace '(?m)^& \\$EntryExe setup\\s*$', '# stripped by epic-setup: run devin setup yourself to log in')))",
               "installTimeoutSeconds": 180,
               "homepage": "https://devin.ai/download",
-              "needsReview": true,
               "tags": [
                 "cli"
               ],
-              "needsUserSetup": true,
               "runAsUser": true
             }
           ]
@@ -1148,7 +1142,6 @@
               "name": "MSI Afterburner",
               "description": "GPU overclocking & monitoring - official download page requires manual setup",
               "size": 60,
-              "needsUserSetup": true,
               "homepage": "https://www.msi.com/Landing/afterburner/graphics-cards",
               "needsReview": true
             }
