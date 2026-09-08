@@ -617,7 +617,7 @@
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /MERGETASKS=!runcode",
               "runAsUser": true,
-              "installTimeoutSeconds": 180,
+              "installTimeoutSeconds": 600,
               "homepage": "https://cursor.sh/",
               "needsReview": true,
               "sources": [
@@ -638,7 +638,7 @@
               "size": 200,
               "installerType": "Inno",
               "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES",
-              "installTimeoutSeconds": 180,
+              "installTimeoutSeconds": 600,
               "homepage": "https://antigravity.google/",
               "needsReview": true,
               "sources": [
@@ -706,7 +706,7 @@
               "size": 250,
               "installerType": "Script",
               "silentArgs": "& {[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://dot.net/v1/dotnet-install.ps1').Content)) -Channel '10.0' -InstallDir $env:LOCALAPPDATA\\Microsoft\\DotNet}",
-              "installTimeoutSeconds": 180,
+              "installTimeoutSeconds": 600,
               "homepage": "https://dotnet.microsoft.com/",
               "needsReview": true
             },
@@ -891,7 +891,7 @@
               "size": 500,
               "installerType": "Script",
               "silentArgs": "iex (irm https://hermes-agent.nousresearch.com/install.ps1)",
-              "installTimeoutSeconds": 300,
+              "installTimeoutSeconds": 900,
               "homepage": "https://hermes-agent.nousresearch.com/",
               "needsReview": true,
               "tags": [
