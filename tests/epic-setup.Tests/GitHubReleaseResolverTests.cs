@@ -93,7 +93,7 @@ public class GitHubReleaseResolverTests
         "helium" => "helium_0.15.1.1_x64-installer.exe",
         "obs-studio" => "OBS-Studio-30.2.3-Windows-x64-Installer.exe",
         "mpvnet" => "mpv.net-v7.1.0-setup-x64.exe",
-        "audacity" => "audacity-win-3.6.4-64bit.exe",
+        "audacity" => "audacity-win-4.0.0-x86_64.msi",
         "yt-dlp" => "yt-dlp.exe",
         "taiga" => "TaigaSetup_1.4.1.exe",
         "7-zip" => "7z2602-x64.exe",
